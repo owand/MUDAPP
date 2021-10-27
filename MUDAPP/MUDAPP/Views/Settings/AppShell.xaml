@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Shell xmlns="http://xamarin.com/schemas/2014/forms"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+       mc:Ignorable="d"
+       xmlns:resources="clr-namespace:MUDAPP.Resources"
+       xmlns:settings="clr-namespace:MUDAPP.Views.Settings"
+       FlyoutHeaderBehavior="CollapseOnScroll"
+       FlyoutBackgroundColor="#2D353E"
+       BackgroundColor="#2D353E"
+       x:Class="MUDAPP.Views.Settings.AppShell">
+
+    <Shell.Resources>
+        <Style x:Key="BaseStyle" TargetType="Element">
+            <Setter Property="Shell.BackgroundColor" Value="#2D353E" />
+            <Setter Property="Shell.ForegroundColor" Value="White" />
+            <Setter Property="Shell.TitleColor" Value="White" />
+            <Setter Property="Shell.DisabledColor" Value="#B4FFFFFF" />
+            <Setter Property="Shell.UnselectedColor" Value="#95FFFFFF" />
+        </Style>
+        <Style TargetType="Shell" BasedOn="{StaticResource BaseStyle}" />
+        <Style TargetType="FlyoutItem" BasedOn="{StaticResource BaseStyle}" />
+    </Shell.Resources>
+
+    <Shell.FlyoutHeader>
+        <settings:FlyoutHeader />
+    </Shell.FlyoutHeader>
+
+
+    <!--С помощью свойства Shell.ItemTemplate мы, до некоторой степени, можем настроить отображение FlyoutItem в левом меню.-->
+    <Shell.ItemTemplate>
+        <DataTemplate>
+            <Grid HeightRequest="{x:OnPlatform Android=48}" >
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal" />
+                            <VisualState x:Name="Selected">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{x:OnPlatform Android=DarkOrange}"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </VisualStateManager.VisualStateGroups>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="0"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <!--<Image Grid.Column="0" Source="{Binding FlyoutIcon}" HeightRequest="{x:OnPlatform Android=24, iOS=22, UWP=16}" />-->
+                <Label Grid.Column="1" Text="{Binding Title}" Margin="12,0,12,0" VerticalTextAlignment="Center" TextColor="White" />
+            </Grid>
+        </DataTemplate>
+    </Shell.ItemTemplate>
+
+    <!--С помощью свойства Shell.ItemTemplate мы, до некоторой степени, можем настроить отображение FlyoutMenuItem в левом меню.-->
+    <Shell.MenuItemTemplate>
+        <DataTemplate>
+            <Grid HeightRequest="{x:OnPlatform Android=48}" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="0"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <!--<Image Grid.Column="0" Source="{Binding FlyoutIcon}" HeightRequest="{x:OnPlatform Android=24, iOS=22, UWP=16}" />-->
+                <Label Grid.Column="1" Text="{Binding Text}" Margin="12,0,12,0" VerticalTextAlignment="Center" TextColor="White" />
+            </Grid>
+        </DataTemplate>
+    </Shell.MenuItemTemplate>
+
+
+    <!--1й вариант-->
+    <!--<FlyoutItem Title="{x:Static resources:AppResource.TitleMudCatalog}" >
+        <ShellContent ContentTemplate="{DataTemplate contents:MudCatalogPage}" />
+    </FlyoutItem>-->
+    <!--2й вариант-->
+    <!--<ShellContent Title="{x:Static resources:AppResource.TitleBitDecode}" ContentTemplate="{DataTemplate contents:BitDecodePage}" Route="bitdecodepage" />-->
+    <!--3й вариант-->
+    <!--<contents:BitDecodePage />-->
+    <!--4й вариант-->
+    <MenuItem Text="{x:Static resources:AppResource.TitleMudCatalog}" Command="{Binding GoMudCatalogCommand}" />
+
+    <!--4й вариант-->
+    <MenuItem Text="{x:Static resources:AppResource.TitleMudType}" Command="{Binding GoMudTypeCommand}" />
+
+    <!--4й вариант-->
+    <MenuItem Text="{x:Static resources:AppResource.TitleCalcCementVol}" Command="{Binding GoCalcVolCommand}" />
+
+    <!--4й вариант-->
+    <MenuItem Text="{x:Static resources:AppResource.TitleCalcCementWeight}" Command="{Binding GoCalcWeitCommand}" />
+
+    <!--4й вариант-->
+    <MenuItem Text="{x:Static resources:AppResource.TitleCalcSpacerVol}" Command="{Binding GoCalcSpacerCommand}" />
+
+
+    <!--1й вариант-->
+    <!--<FlyoutItem Title="{x:Static resources:AppResource.SettingsApp}" >
+        <ShellContent ContentTemplate="{DataTemplate settings:SettingsPage}" Route="settingspage" />
+    </FlyoutItem>-->
+    <!--2й вариант-->
+    <ShellContent x:Name="settingsPage" Title="{x:Static resources:AppResource.SettingsApp}" ContentTemplate="{DataTemplate settings:SettingsPage}" />
+    <!--3й вариант-->
+    <!--<contents:SettingsPage />-->
+    <!--4й вариант-->
+    <!--<MenuItem Text="{x:Static resources:AppResource.SettingsApp}" Clicked="OpenSettings" />-->
+    <!--<MenuItem Text="{x:Static resources:AppResource.SettingsApp}" Command="{Binding GoToSettingsCommand}" />-->
+
+
+</Shell>
