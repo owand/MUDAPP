@@ -11,57 +11,36 @@ namespace MUDAPP.Views.Mud
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class CalcCementWeitPage : ContentPage
     {
-        private readonly CalcCementViewModel viewModel = null;
-        public CalcCementModel calcCementItem = null;
-        private readonly MudFilterViewModel mudViewModel = null;
+        private CalcCementViewModel viewModel;
+        private MudList mudViewModel;
 
         public CalcCementWeitPage()
         {
             InitializeComponent();
-            Shell.Current.FlyoutIsPresented = false;
-            BindingContext = viewModel = new CalcCementViewModel();
-
-            mudViewModel = new MudFilterViewModel();
-            picMudName.BindingContext = mudViewModel;
-
-            calcCementItem = viewModel?.CalcCementItem; // Производим отбор текущей записи (переменная для загрузки картинки)
-            Shell.Current.Navigating += Current_Navigating; // Определяем обработчик события Shell.OnNavigating
-        }
-
-        private void Current_Navigating(object sender, ShellNavigatingEventArgs e)
-        {
-            if (e.CanCancel)
-            {
-                e.Cancel(); // Позволяет отменить навигацию
-                OnBackButtonPressed();
-            }
         }
 
         // События непосредственно перед тем как страница становится видимой.
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
             try
             {
-                Xamarin.Forms.Device.BeginInvokeOnMainThread(async () =>
-                {
-                    indicator.IsRunning = true;
-                    IsBusy = true; ;  // Затеняем задний фон и запускаем ProgressRing
-                    await System.Threading.Tasks.Task.Delay(100);
+                IsBusy = true;   // Затеняем задний фон и запускаем ProgressRing
 
-                    picMudName.SelectedIndex = mudViewModel.MudList.IndexOf(mudViewModel?.MudList.Where(X => X.MUDID == calcCementItem.MUDID).FirstOrDefault());
-                    IsBusy = false;
-                    indicator.IsRunning = false;
-                });
+                BindingContext = viewModel = viewModel ?? new CalcCementViewModel();
+
+                picMudName.BindingContext = mudViewModel = mudViewModel ?? new MudList();
+
+                mudViewModel.Collection = mudViewModel?.GetCollection(null, null);
+
+                picMudName.SelectedIndex = mudViewModel.Collection.IndexOf(mudViewModel?.Collection.Where(X => X.ID == viewModel.CalcCementItem.MUDID).FirstOrDefault());
+
+                IsBusy = false;
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -81,7 +60,7 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                labDensityDryCement.Text = mudViewModel?.MudList[picMudName.SelectedIndex].DENSITY.ToString("N2");
+                labDensityDryCement.Text = mudViewModel?.Collection[picMudName.SelectedIndex].DENSITY.ToString("N2");
                 OnResult();
             }
             catch { }
@@ -130,9 +109,9 @@ namespace MUDAPP.Views.Mud
                     labTGflu.Text = TGflu.ToString("N2");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Что-то пошло не так
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -142,24 +121,20 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                calcCementItem.DENSITYSLURRY = decimal.Parse(edDensitySlurry.Text); // Плотность тампонажного раствора, г/см3 / The density of cement slurry, g / cm3
-                calcCementItem.DENSITYFLUID = decimal.Parse(edDensityFluid.Text); // Плотность жидкости затворения, г/см3 / Density of mixing fluid, g / cm3
+                viewModel.CalcCementItem.DENSITYSLURRY = decimal.Parse(edDensitySlurry.Text); // Плотность тампонажного раствора, г/см3 / The density of cement slurry, g / cm3
+                viewModel.CalcCementItem.DENSITYFLUID = decimal.Parse(edDensityFluid.Text); // Плотность жидкости затворения, г/см3 / Density of mixing fluid, g / cm3
 
-                calcCementItem.MUDID = mudViewModel.MudList[picMudName.SelectedIndex].MUDID; // Уникальный код реагентов и тампонажных смесей
+                viewModel.CalcCementItem.MUDID = mudViewModel.Collection[picMudName.SelectedIndex].ID; // Уникальный код реагентов и тампонажных смесей
 
-                calcCementItem.CLOSSCEMENT = decimal.Parse(edCLossCement.Text); // Коэффициент потерь сухого цемента / Dry cement loss ratio
-                calcCementItem.CLOSSWATER = decimal.Parse(edCLossWater.Text); // Коэффициент потери воды / Water loss coefficient
+                viewModel.CalcCementItem.CLOSSCEMENT = decimal.Parse(edCLossCement.Text); // Коэффициент потерь сухого цемента / Dry cement loss ratio
+                viewModel.CalcCementItem.CLOSSWATER = decimal.Parse(edCLossWater.Text); // Коэффициент потери воды / Water loss coefficient
 
                 //Сохраняем изменения в текущей записи.
-                viewModel?.UpdateItem(calcCementItem);
+                viewModel?.UpdateItem();
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -180,29 +155,10 @@ namespace MUDAPP.Views.Mud
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
 
-        // hardware back button
-        protected override bool OnBackButtonPressed()
-        {
-            base.OnBackButtonPressed();
-
-            try
-            {
-                Shell.Current.Navigating -= Current_Navigating; // Отписываемся от события Shell.OnNavigating
-                Device.BeginInvokeOnMainThread(async () => { await Shell.Current.GoToAsync("..", true); });
-            }
-            catch { return false; }
-            // Always return true because this method is not asynchronous.
-            // We must handle the action ourselves: see above.
-            return true;
-        }
     }
 }

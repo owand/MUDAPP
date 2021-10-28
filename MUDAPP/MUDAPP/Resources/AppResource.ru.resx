@@ -798,7 +798,7 @@
     <comment>Заголовок для грузоподъемности</comment>
   </data>
   <data name="Tonnage" xml:space="preserve">
-    <value>Грузоподъемность, т.</value>
+    <value>Грузоподъемность, т</value>
     <comment>Заголовок для грузоподъемности</comment>
   </data>
   <data name="Type" xml:space="preserve">
@@ -1051,5 +1051,8 @@
   </data>
   <data name="ThemesOSName" xml:space="preserve">
     <value>Системная</value>
+  </data>
+  <data name="FilterError" xml:space="preserve">
+    <value>Активный режим редактирования!</value>
   </data>
 </root>

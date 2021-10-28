@@ -32,26 +32,18 @@
 
     <AbsoluteLayout HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" >
         <StackLayout Spacing="0" BackgroundColor="{AppThemeBinding Dark={StaticResource Background_Dark}, Light={StaticResource Background_Light}}" AbsoluteLayout.LayoutFlags="All" AbsoluteLayout.LayoutBounds="0, 0, 1, 1" >
-            <Grid ColumnSpacing="0" RowSpacing="0" >
+            <Grid ColumnSpacing="0" RowSpacing="0" RowDefinitions="48, 60, *">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="{x:OnIdiom Tablet='500', Desktop='500', Phone='*'}" />
                     <ColumnDefinition Width="{x:OnIdiom Tablet='*', Desktop='*', Phone='0'}" />
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="48" />
-                    <RowDefinition Height="60" />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
                 <!--Header-->
-                <Grid x:Name="Header" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" ColumnSpacing="0" RowSpacing="0" BackgroundColor="#515C6B" HeightRequest="48" MinimumHeightRequest="48">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
+                <Grid x:Name="Header" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" ColumnSpacing="0" RowSpacing="0" BackgroundColor="#515C6B"
+                      ColumnDefinitions="*, *" HeightRequest="48" MinimumHeightRequest="48">
                     <!-- SaveCommandBar -->
                     <StackLayout Grid.Column="1" x:Name="SaveCommandBar" Orientation="Horizontal" HorizontalOptions="End" Spacing="0">
-                        <Button x:Name="CloseButton" Text="&#xF073A;" Released="OnCancel" />
-                        <Button x:Name="SaveButton" Text="&#xF0193;" Released="OnSave" />
+                        <Button Text="{StaticResource CancelIcon}" Released="OnCancel" />
+                        <Button Text="{StaticResource SaveIcon}" Released="OnSave" />
                     </StackLayout>
                 </Grid>
 
@@ -78,30 +70,13 @@
                 <!--Content-->
                 <ScrollView x:Name="Detail" Grid.Column="0" Grid.Row="2" VerticalOptions="FillAndExpand">
                     <!-- Formula parameters -->
-                    <Grid x:Name="FormulaContent" Grid.Column="0" Margin="12,12,12,40" ColumnSpacing="0" RowSpacing="0" HorizontalOptions="FillAndExpand" VerticalOptions="Start">
+                    <Grid x:Name="FormulaContent" Grid.Column="0" Margin="12,12,12,40" ColumnSpacing="0" RowSpacing="0" HorizontalOptions="FillAndExpand" VerticalOptions="Start"
+                          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="68" />
                             <ColumnDefinition />
                             <ColumnDefinition Width="{x:OnPlatform Android='88', iOS='88', UWP='100'}" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
 
                         <!-- About Formula -->
                         <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="{x:Static resources:AppResource.FormulaCementWAbout}" Margin="0,8,0,12" />
@@ -130,7 +105,7 @@
                         <!-- Уникальный код реагентов и тампонажных смесей -->
                         <Label Grid.Row="3" Grid.Column="0" Text="{x:Static resources:AppResource.Cement}" Margin="0,12,0,12" VerticalOptions="Center" FontAttributes="Bold" />
                         <Picker x:Name="picMudName" Grid.Row="3" Grid.Column="1" Margin="0,12,20,16" SelectedIndexChanged="OnSelectedIndexChanged"
-                                ItemsSource="{Binding MudList}" SelectedItem="{Binding MUDID, Mode=TwoWay}" ItemDisplayBinding="{Binding MUDNAME}"
+                                ItemsSource="{Binding Collection}" SelectedItem="{Binding ID, Mode=TwoWay}" ItemDisplayBinding="{Binding MUDNAME}" SelectedIndex="{Binding ID, Mode=TwoWay}"
                                 Title="{OnPlatform Android={x:Static resources:AppResource.HeaderName}, iOS={x:Static resources:AppResource.HeaderName}}" VerticalOptions="Center" />
                         <Label Grid.Row="3" Grid.Column="2" x:Name="labDensityDryCement" Text="{x:Static resources:AppResource.FormulaZero}"
                                HorizontalTextAlignment="Start" TextColor="DarkOrange" VerticalOptions="Center"
@@ -230,9 +205,9 @@
             </Grid>
         </StackLayout>
 
-        <StackLayout IsVisible="{Binding IsBusy}" Padding="12" AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1">
-            <ActivityIndicator x:Name="indicator" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" IsEnabled="{Binding IsBusy}"
-                               Color="DarkOrange" HeightRequest="48" WidthRequest="48" BackgroundColor="Transparent" />
+        <StackLayout Padding="12" AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1">
+            <ActivityIndicator x:Name="indicator" IsVisible="{Binding Source={x:Reference cementWeightPage}, Path=IsBusy}"
+                               IsRunning="{Binding Source={x:Reference cementWeightPage}, Path=IsBusy}" Color="DarkOrange" HeightRequest="48" WidthRequest="48" BackgroundColor="Transparent" />
         </StackLayout>
     </AbsoluteLayout>
 </ContentPage>
