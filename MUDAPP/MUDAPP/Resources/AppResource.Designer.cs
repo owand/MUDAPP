@@ -368,6 +368,24 @@ namespace MUDAPP.Resources {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Restoring a database from a copy.
+        /// </summary>
+        internal static string DBDownload {
+            get {
+                return ResourceManager.GetString("DBDownload", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Saving a copy of the database.
+        /// </summary>
+        internal static string DBUpload {
+            get {
+                return ResourceManager.GetString("DBUpload", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Density, g/cm3:.
         /// </summary>
         internal static string Density {

@@ -1055,4 +1055,12 @@
   <data name="FilterError" xml:space="preserve">
     <value>Активный режим редактирования!</value>
   </data>
+  <data name="DBDownload" xml:space="preserve">
+    <value>Восстановление базы данных из копии</value>
+    <comment>Заголовок для кнопки - Сохранить копию базы данных</comment>
+  </data>
+  <data name="DBUpload" xml:space="preserve">
+    <value>Сохранение копии базы данных</value>
+    <comment>Заголовок для кнопки - Сохранить копию базы данных</comment>
+  </data>
 </root>

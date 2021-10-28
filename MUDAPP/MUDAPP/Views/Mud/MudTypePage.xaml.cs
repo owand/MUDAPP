@@ -3,6 +3,8 @@ using MUDAPP.Resources;
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -11,52 +13,36 @@ namespace MUDAPP.Views.Mud
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class MudTypePage : ContentPage
     {
-        private MudTypeViewModel viewModel;
-        private MudTypeJoin NewItem = null; // Новая запись
+        private MudType viewModel;
 
         public MudTypePage()
         {
             InitializeComponent();
-            Shell.Current.FlyoutIsPresented = false;
             LayoutChanged += OnSizeChanged; // Определяем обработчик события, которое происходит, когда изменяется ширина или высота.
             Shell.Current.Navigating += Current_Navigating; // Определяем обработчик события Shell.OnNavigating
         }
 
         // События непосредственно перед тем как страница становится видимой.
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
             try
             {
-                indicator.IsRunning = true;
                 IsBusy = true; ;  // Затеняем задний фон и запускаем ProgressRing
 
-                Xamarin.Forms.Device.BeginInvokeOnMainThread(async () =>
-                {
-                    if (viewModel == null) // Если не открыт Picer для выбора картинки в Android
-                    {
-                        viewModel = new MudTypeViewModel(string.Empty);
-                    }
+                BindingContext = viewModel = viewModel ?? new MudType();
 
-                    BindingContext = viewModel;
+                await RefreshListView();
 
-                    if (viewModel.SelectedJoinItem == null) // Если не открыт Picer для выбора картинки в Android
-                    {
-                        viewModel.SelectedJoinItem = viewModel?.JoinCollection?.FirstOrDefault(); // Переходим на первую запись.
-                    }
-
-                    viewModel.DetailMode = false;
-
-                    await System.Threading.Tasks.Task.Delay(100);
-                });
+                viewModel.SelectItem = viewModel.Collection.Count == 0 ? null : viewModel.Collection.FirstOrDefault();
+                MasterContent.ScrollTo(viewModel.SelectItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
 
                 IsBusy = false;
-                indicator.IsRunning = false;
             }
             catch (Exception ex)
             {
-                Device.BeginInvokeOnMainThread(async () => { await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); }); // Что-то пошло не так
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -85,6 +71,7 @@ namespace MUDAPP.Views.Mud
                 {
                     EditButton.IsEnabled = true; // Кнопка Редактирования активна.
                     DeleteButton.IsEnabled = true; // Кнопка Удаления записи активна.
+                    MasterContent.ScrollTo(viewModel.SelectItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
                 }
                 else
                 {
@@ -94,11 +81,7 @@ namespace MUDAPP.Views.Mud
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -129,55 +112,34 @@ namespace MUDAPP.Views.Mud
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () => { await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
 
         // Фильтр записей отображаемых в ListView.
-        private void OnFilter(object sender, TextChangedEventArgs e)
+        private async void OnFilter(object sender, TextChangedEventArgs e)
         {
-            try
-            {
-                // Обновление записей в ListView Collection
-                RefreshListView();
-            }
-            catch (Exception ex)
-            {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
-                return;
-            }
+            await RefreshListView(); // Обновление записей в ListView Collection
         }
 
-        private void DeleteImage(object sender, EventArgs e)
+        private async void DeleteImage(object sender, EventArgs e)
         {
             try
             {
-                Device.BeginInvokeOnMainThread(async () =>
+                bool dialog = await DisplayAlert(AppResource.messageTitleAction, AppResource.messageDelete, AppResource.messageOk, AppResource.messageСancel);
+                if (dialog == true)
                 {
-                    bool dialog = await DisplayAlert(AppResource.messageTitleAction, AppResource.messageDelete, AppResource.messageOk, AppResource.messageСancel);
-                    if (dialog == true)
-                    {
-                        viewModel.SelectedJoinItem.PICTURE = null;
-                    }
-                    else
-                    {
-                        return;
-                    }
-                });
+                    viewModel.SelectItem.PICTURE = null;
+                }
+                else
+                {
+                    return;
+                }
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -186,41 +148,25 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                Plugin.FilePicker.Abstractions.FileData fileData = await Plugin.FilePicker.CrossFilePicker.Current.PickFile();
-                if (fileData != null)
+                FileResult file = await FilePicker.PickAsync();
+                if (file != null)
                 {
-                    MemoryStream memoryStream = new MemoryStream();
-                    Stream stream = fileData.GetStream();
-                    stream.CopyTo(memoryStream);
-                    stream.Dispose();
-                    viewModel.SelectedJoinItem.PICTURE = memoryStream.ToArray();
+                    if (file.FileName.EndsWith("jpg", StringComparison.OrdinalIgnoreCase) || file.FileName.EndsWith("png", StringComparison.OrdinalIgnoreCase))
+                    {
+                        MemoryStream memoryStream = new MemoryStream();
+                        Stream stream = await file.OpenReadAsync();
+                        stream.CopyTo(memoryStream);
+                        stream.Dispose();
+                        viewModel.SelectItem.PICTURE = memoryStream.ToArray();
+                    }
                 }
 
-                switch (Device.Idiom)
-                {
-                    //case TargetIdiom.Desktop:
-                    //case TargetIdiom.Tablet:
-                    //    if (Width <= 800)
-                    //    {
-                    //        await BuildIt.Forms.VisualStateManager.GoToState(this, "DetailsState"); // Компактный вид, режим чтения, только детали (список мастера скрыт).
-                    //    }
-                    //    else
-                    //    {
-                    //        await BuildIt.Forms.VisualStateManager.GoToState(this, "DefaultState"); // Расширенный (полный) вид, режим чтения.
-                    //    }
-
-                    //    break;
-
-                    case TargetIdiom.Phone:
-                        GoToEditState(); // Переходим в режим чтения.
-                        break;
-
-                    default: break;
-                }
+                GoToEditState(); // Переходим в режим чтения.
             }
             catch (Exception ex)
             {
                 await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
+                return;
             }
         }
 
@@ -231,23 +177,22 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                NewItem = null;
+                viewModel.NewJoinItem = null;
 
-                if (MasterContent.SelectedItem != null)
+                if (viewModel.SelectItem != null)
                 {
                     GoToEditState(); // Переходим в режим редактирования.
                 }
                 else
                 {
                     EditButton.IsEnabled = false; // Если нет активной записи в MasterListView, кнопка Редактирования неактивна.
-                    Device.BeginInvokeOnMainThread(async () => { await DisplayAlert(AppResource.messageAttention, AppResource.messageNoActiveRecord, AppResource.messageСancel); }); // Что-то пошло не так
+                    DisplayAlert(AppResource.messageAttention, AppResource.messageNoActiveRecord, AppResource.messageСancel); // Что-то пошло не так
                     return;
                 }
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () => { await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -255,23 +200,15 @@ namespace MUDAPP.Views.Mud
         // Создаем новую запись.
         private void OnAdd(object sender, EventArgs e)
         {
-            // Создаем новую запись в объединенной коллекции
-            NewItem = viewModel?.NewItem;
             try
             {
-                viewModel?.JoinCollection?.Add(viewModel?.NewItem);
-                viewModel.SelectedJoinItem = viewModel?.NewItem;
-                MasterContent.ScrollTo(viewModel.SelectedJoinItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
-
                 GoToEditState(); // Переходим в режим редактирования.
+                viewModel.AddItem(); // Создаем новую запись в объединенной коллекции
+                MasterContent.ScrollTo(viewModel.SelectItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -281,27 +218,27 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
+                int indexItem = viewModel.Collection.IndexOf(viewModel.SelectItem);
+
                 Device.BeginInvokeOnMainThread(async () =>
                 {
                     bool dialog = await DisplayAlert(AppResource.messageTitleAction, AppResource.messageDelete, AppResource.messageOk, AppResource.messageСancel);
                     if (dialog == true)
                     {
-                        int indexItem = viewModel.JoinCollection.IndexOf(viewModel.SelectedJoinItem);
-                        // Удаляем текущую запись.
-                        viewModel?.DeleteItem();
+                        viewModel.DeleteItem(); // Удаляем текущую запись.
 
-                        if (viewModel?.JoinCollection?.FirstOrDefault() != null) // Если в Collection есть записи.
+                        if (viewModel.Collection.Count != 0) // Если в Collection есть записи.
                         {
                             if (indexItem == 0) // Если текущая запись первая.
                             {
-                                viewModel.SelectedJoinItem = viewModel?.JoinCollection?[indexItem]; // Переходим на следующую запись после удаленной, у которой такой же индекс как и у удаленной.
-                                return;
+                                viewModel.SelectItem = viewModel.Collection[indexItem]; // Переходим на следующую запись после удаленной, у которой такой же индекс как и у удаленной.
                             }
                             else
                             {
-                                viewModel.SelectedJoinItem = viewModel?.JoinCollection[indexItem - 1]; // Переходим на предыдующую запись перед удаленной.
+                                viewModel.SelectItem = viewModel.Collection[indexItem - 1]; // Переходим на предыдующую запись перед удаленной.
                             }
                         }
+                        MasterContent.ScrollTo(viewModel.SelectItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
                     }
                     else
                     {
@@ -311,92 +248,109 @@ namespace MUDAPP.Views.Mud
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                return;
+            }
+        }
+
+        // Сохраняем изменения в основной коллекции.
+        private async Task SaveHostItem()
+        {
+            try
+            {
+                if (viewModel.GetSelectHostItem() != null)
                 {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                    // Текущая основная коллекция
+                    viewModel.SelectHostItem = viewModel.GetSelectHostItem();
+                    viewModel.SelectHostItem.TYPENAME = viewModel.SelectItem.TYPENAME;
+                    viewModel.SelectHostItem.PICTURE = viewModel.SelectItem.PICTURE ?? null; // Читаем данные из соответствующего поля.
+                }
+                else
+                {
+                    // Новая основная коллекция
+                    viewModel.NewHostItem = new MudTypeModel() // Данные для новой основной коллекции
+                    {
+                        TYPENAME = viewModel.SelectItem.TYPENAME,
+                        PICTURE = viewModel.SelectItem.PICTURE
+                    };
+                }
+
+                viewModel.UpdateItem(); // Сохраняем запись в основной и подчиненной коллекции
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                return;
+            }
+        }
+
+        // Сохраняем изменения в подчиненной коллекции.
+        private async Task SaveSubItem()
+        {
+            try
+            {
+                // Данные для текущей подчиненной коллекции
+                if (viewModel.GetSelectSubItem() != null)
+                {
+                    viewModel.SelectSubItem = viewModel.GetSelectSubItem();
+                    viewModel.SelectSubItem.DESCRIPTION = viewModel.SelectItem.DESCRIPTION;
+                    viewModel.SelectSubItem.NOTE = viewModel.SelectItem.NOTE;
+                }
+                else
+                {
+                    // Данные для новой подчиненной коллекции
+                    viewModel.NewSubItem = new MudTypeSubModel()
+                    {
+                        TYPEID = viewModel.NewHostItem != null ? viewModel.NewHostItem.TYPEID : viewModel.SelectHostItem.TYPEID,
+                        DESCRIPTION = viewModel.SelectItem.DESCRIPTION,
+                        NOTE = viewModel.SelectItem.NOTE,
+                        LANGUAGE = App.AppLanguage
+                    };
+                }
+
+                viewModel.UpdateSubItem(); // Сохраняем запись в основной и подчиненной коллекции
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
 
         // Сохраняем изменения.
-        private void OnSave(object sender, EventArgs e)
+        private async void OnSave(object sender, EventArgs e)
         {
             try
             {
-                MudTypeModel selectItem = null;
-                MudTypeModel newItem = null;
-                MudTypeMLModel selectMLItem = null;
-                MudTypeMLModel newMLItem = null;
+                await SaveHostItem(); // Сохраняем изменения в основной коллекции.
 
-                if (NewItem == null)
+                await SaveSubItem(); // Сохраняем изменения в подчиненной коллекции.
+
+                await RefreshListView();
+
+                //После обновления записей отображаемых в ListView.
+                if (viewModel.Collection.Count != 0)
                 {
-                    // Данные для основной коллекции
-                    selectItem = viewModel?.Collection.FirstOrDefault(c => c.TYPEID == viewModel?.SelectedJoinItem.TYPEID);
-                    selectItem.TYPENAME = editNAME.Text;
-                    if (viewModel.SelectedJoinItem.PICTURE != null)
-                    {
-                        selectItem.PICTURE = viewModel.SelectedJoinItem.PICTURE; // Читаем данные из соответствующего поля.
-                    }
-                    else
-                    {
-                        selectItem.PICTURE = null; // Читаем данные из соответствующего поля.
-                    }
-                    viewModel?.UpdateItem(selectItem); // Сохраняем запись в основной коллекции
-
-                    // Данные для подчиненной коллекции
-                    if (viewModel.MLCollection.FirstOrDefault(mlc => mlc.TYPEID == viewModel.SelectedJoinItem.TYPEID) != null)
-                    {
-                        selectMLItem = viewModel.MLCollection.FirstOrDefault(mlc => mlc.TYPEID == viewModel.SelectedJoinItem.TYPEID);
-                        selectMLItem.DESCRIPTION = editDESCRIPTION.Text;
-                        selectMLItem.NOTE = editNOTE.Text;
-                        selectMLItem.LANGUAGE = App.AppLanguage;
-                    }
-                    // Данные для подчиненной коллекции
-                    newMLItem = new MudTypeMLModel
-                    {
-                        TYPEID = viewModel.SelectedJoinItem.TYPEID,
-                        DESCRIPTION = editDESCRIPTION.Text,
-                        NOTE = editNOTE.Text,
-                        LANGUAGE = App.AppLanguage
-                    };
-                }
-                else
-                {
-                    // Данные для основной коллекции
-                    newItem = new MudTypeModel
-                    {
-                        TYPENAME = editNAME.Text,
-                        PICTURE = viewModel.SelectedJoinItem.PICTURE
-                    };
-                    viewModel?.UpdateItem(newItem); // Создаем запись в основной коллекции
-
-                    // Данные для подчиненной коллекции
-                    newMLItem = new MudTypeMLModel
-                    {
-                        TYPEID = newItem.TYPEID,
-                        DESCRIPTION = editDESCRIPTION.Text,
-                        NOTE = editNOTE.Text,
-                        LANGUAGE = App.AppLanguage
-                    };
+                    viewModel.SelectItem = viewModel.NewJoinItem != null ? viewModel.Collection.FirstOrDefault(a => a.ID == viewModel.NewHostItem.TYPEID) :
+                                                                           viewModel.Collection.FirstOrDefault(a => a.ID == viewModel.SelectHostItem.TYPEID);
+                    MasterContent.ScrollTo(viewModel.SelectItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
                 }
 
-                viewModel?.UpdateMLItem(newMLItem, selectMLItem); // Создаем запись в подчиненной коллекции
-                selectItem = null;
-                newItem = null;
-                selectMLItem = null;
-                newMLItem = null;
+                viewModel.SelectHostItem = null;
+                viewModel.NewHostItem = null;
+                viewModel.SelectSubItem = null;
+                viewModel.NewSubItem = null;
+                viewModel.NewJoinItem = null;
 
-                Cancel(); // Отмена изменений в записи.
+                viewModel.DetailMode = true;
+
+                SaveCommandBar.IsVisible = false;
+                SearchBar.Focus();
+                OnSizeChangeInterface(); // Изменение интерфейса при изменении размера окна
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -404,83 +358,10 @@ namespace MUDAPP.Views.Mud
         // Отмена изменений.
         private void OnCancel(object sender, EventArgs e)
         {
-            try
-            {
-                Cancel(); // Отмена изменений в записи.
-            }
-            catch (Exception ex)
-            {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
-                return;
-            }
+            Cancel(); // Отмена изменений в записи.
         }
 
         #endregion --------- Header - Command --------
-
-        // Обновление записей отображаемых в ListView.
-        private void RefreshListView()
-        {
-            try
-            {
-                int idItem = -1;
-                if (viewModel.SelectedJoinItem != null)
-                {
-                    idItem = viewModel.SelectedJoinItem.TYPEID;
-                }
-
-                if (string.IsNullOrEmpty(SearchBar.Text))
-                {
-                    SearchBar.Text = string.Empty;
-                }
-
-                MasterContent.BeginRefresh();
-                viewModel = null;
-                BindingContext = null;
-                MasterContent.Behaviors.Clear();
-                viewModel = new MudTypeViewModel(SearchBar.Text.ToLowerInvariant());
-                BindingContext = viewModel;
-                MasterContent.EndRefresh();
-
-                if (viewModel.JoinCollection.Count == 0)
-                {
-                    return;
-                }
-                else
-                {
-                    if (NewItem != null)
-                    {
-                        viewModel.SelectedJoinItem = viewModel?.JoinCollection.FirstOrDefault(temp => temp.TYPEID == viewModel?.JoinCollection.Max(x => x.TYPEID));
-                        MasterContent.ScrollTo(viewModel.SelectedJoinItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
-                        return;
-                    }
-                    else if (idItem > 0)
-                    {
-                        viewModel.SelectedJoinItem = viewModel?.JoinCollection.FirstOrDefault(temp => temp.TYPEID == idItem); // Переходим на последнюю активную запись.
-                        MasterContent.ScrollTo(viewModel.SelectedJoinItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
-                        return;
-                    }
-                    else
-                    {
-                        viewModel.SelectedJoinItem = viewModel.JoinCollection.FirstOrDefault();
-                        MasterContent.ScrollTo(viewModel.SelectedJoinItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
-                        return;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
-                return;
-            }
-        }
 
         // hardware back button
         protected override bool OnBackButtonPressed()
@@ -489,26 +370,24 @@ namespace MUDAPP.Views.Mud
 
             try
             {
-                if (viewModel?.DetailMode == false)
+                if (viewModel.DetailMode == false)
                 {
                     Shell.Current.Navigating -= Current_Navigating; // Отписываемся от события Shell.OnNavigating
-                    NewItem = null;
                     viewModel = null;
-                    Device.BeginInvokeOnMainThread(async () => { await Shell.Current.GoToAsync("..", true); });
+                    Shell.Current.GoToAsync("..", true);
                 }
-                else if ((viewModel?.DetailMode == true) && (viewModel?.ReadMode == false))
+                else if ((viewModel.DetailMode == true) && (SaveCommandBar.IsVisible == true))
                 {
                     Cancel(); // Отмена изменений в записи.
                 }
-                else if (viewModel?.DetailMode == true)
+                else if (viewModel.DetailMode == true)
                 {
                     viewModel.DetailMode = false;
                     OnSizeChangeInterface(); // Изменение интерфейса при изменении размера окна
                 }
             }
             catch { return false; }
-            // Always return true because this method is not asynchronous.
-            // We must handle the action ourselves: see above.
+            // Always return true because this method is not asynchronous. We must handle the action ourselves: see above.
             return true;
         }
 
@@ -518,19 +397,34 @@ namespace MUDAPP.Views.Mud
             try
             {
                 SaveCommandBar.IsVisible = false;
-                RefreshListView(); //Обновление записей в ListView Collection
-                NewItem = null;
+
+                // После обновления записей отображаемых в ListView.
+                if (viewModel.Collection.Count != 0)
+                {
+                    if (viewModel.NewJoinItem != null)
+                    {
+                        viewModel.SelectItem = viewModel.PreSelectItem;
+                        viewModel.Collection.Remove(viewModel.NewJoinItem);
+                    }
+                    else
+                    {
+                        viewModel.SelectItem = viewModel.SelectItem == null ? viewModel.Collection.FirstOrDefault() : viewModel.PreSelectItem;
+                    }
+                    MasterContent.ScrollTo(viewModel.SelectItem, ScrollToPosition.Center, true); // Прокручиваем Scroll до активной записи.
+                }
+
+                viewModel.NewJoinItem = null;
+                viewModel.SelectHostItem = null;
+                viewModel.SelectSubItem = null;
+
                 SearchBar.Focus();
-                viewModel.DetailMode = true;
+                viewModel.DetailMode = Device.Idiom != TargetIdiom.Desktop && Device.Idiom != TargetIdiom.Tablet || Shell.Current.Width <= 800;
+
                 OnSizeChangeInterface(); // Изменение интерфейса при изменении размера окна
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -540,17 +434,14 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                viewModel.ReadMode = false;
+                viewModel.PreSelectItem = viewModel.SelectItem;
                 viewModel.DetailMode = true;
                 SaveCommandBar.IsVisible = true;
                 OnSizeChangeInterface(); // Изменение интерфейса при изменении размера окна
             }
             catch (Exception ex)
             {
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -613,11 +504,36 @@ namespace MUDAPP.Views.Mud
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                return;
+            }
+        }
+
+        // Обновление записей отображаемых в ListView.
+        private async Task RefreshListView()
+        {
+            try
+            {
+                IsBusy = true; ;  // Затеняем задний фон и запускаем ProgressRing
+
+                await Task.Delay(100);
+
+                //Обновление записей в ListView Collection
+                MasterContent.BeginRefresh();
+                MasterContent.IsRefreshing = true;
+
+                viewModel.Collection = viewModel.GetCollection(SearchBar.Text);
+
+                MasterContent.ItemsSource = viewModel.Collection;
+
+                MasterContent.IsRefreshing = false;
+                MasterContent.EndRefresh();
+
+                IsBusy = false;
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }

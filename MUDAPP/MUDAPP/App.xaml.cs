@@ -1,6 +1,7 @@
 ﻿using MUDAPP.Models;
 using MUDAPP.Resources;
 using MUDAPP.Views;
+using MUDAPP.Views.Settings;
 using SQLite;
 using System;
 using System.Globalization;

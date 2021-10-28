@@ -27,8 +27,6 @@ namespace MUDAPP.Droid
             // Or use this one instead to try IGlideHandler
             // Android.Glide.Forms.Init (this, handler: new RandomAlphaHandler (), debug: true);
 
-            Plugin.CurrentActivity.CrossCurrentActivity.Current.Activity = this;
-
             LoadApplication(new App());
 
             // Подключение приложения к личному account Microsoft, используя Microsoft Graph API
@@ -39,8 +37,8 @@ namespace MUDAPP.Droid
         {
             base.OnActivityResult(requestCode, resultCode, intent);
 
-            // Активация плагина In-App Purchase
-            Plugin.InAppBilling.InAppBillingImplementation.HandleActivityResult(requestCode, resultCode, intent);
+            // Подключение приложения к личному account Microsoft, используя Microsoft Graph API
+            Microsoft.Identity.Client.AuthenticationContinuationHelper.SetAuthenticationContinuationEventArgs(requestCode, resultCode, intent);
         }
 
         // Xamarin.Essentials must receive any OnRequestPermissionsResult. Write the following code for runtime permission.

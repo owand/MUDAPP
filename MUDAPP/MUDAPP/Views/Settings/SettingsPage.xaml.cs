@@ -1,9 +1,8 @@
 ﻿using MUDAPP.Resources;
-using Plugin.InAppBilling;
-using Plugin.InAppBilling.Abstractions;
+using MUDAPP.Services;
+using Microsoft.Graph;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -13,80 +12,47 @@ namespace MUDAPP.Views.Settings
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class SettingsPage : ContentPage
     {
-        public Models.Settings.Settings settingsViewModel;
+        public Models.Settings settingsViewModel;
 
         public SettingsPage()
         {
             InitializeComponent();
 
-            BindingContext = settingsViewModel = new Models.Settings.Settings();
-
-            try
-            {
-                PickerLanguages.SelectedIndex = settingsViewModel.LangCollection.IndexOf(settingsViewModel?.LangCollection.Where(X => X.LANGNAME == App.AppLanguage).FirstOrDefault());
-                PickerThemes.SelectedIndex = settingsViewModel.ThemesCollection.IndexOf(settingsViewModel?.ThemesCollection.Where(X => X.THEMENAME == App.AppTheme).FirstOrDefault());
-            }
-            catch (Exception)
-            {
-                PickerLanguages.SelectedIndex = settingsViewModel.LangCollection.IndexOf(settingsViewModel?.LangCollection.Where(X => X.LANGNAME == "en").FirstOrDefault());
-                PickerThemes.SelectedIndex = settingsViewModel.ThemesCollection.IndexOf(settingsViewModel?.ThemesCollection.Where(X => X.THEMENAME == "myOSTheme").FirstOrDefault());
-            }
+            BindingContext = settingsViewModel = new Models.Settings();
 
             PickerLanguages.SelectedIndexChanged += OnLanguagesChanged;
-            PickerThemes.SelectedIndexChanged += OnThemesChanged;
             LayoutChanged += OnSizeChanged; // Определяем обработчик события, которое происходит, когда изменяется ширина или высота.
-            IsBusy = false;
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
             try
             {
-                Xamarin.Forms.Device.BeginInvokeOnMainThread(async () =>
+                IsBusy = true;
+
+                labAppName.Text = AppInfo.Name; // Application Name
+                switch (Xamarin.Forms.Device.RuntimePlatform)
                 {
-                    await System.Threading.Tasks.Task.Delay(0);
+                    case Xamarin.Forms.Device.iOS:
+                    case Xamarin.Forms.Device.Android:
+                        labAppVersion.Text = $"{AppInfo.VersionString}." + $"{AppInfo.BuildString}"; // Application Version (1.0.0)
+                        break;
 
-                    labAppName.Text = AppInfo.Name; // Application Name
-                    switch (Xamarin.Forms.Device.RuntimePlatform)
-                    {
-                        case Xamarin.Forms.Device.iOS:
-                        case Xamarin.Forms.Device.Android:
-                            labAppVersion.Text = $"{AppInfo.VersionString}." + $"{AppInfo.BuildString}"; // Application Version (1.0.0)
-                            break;
+                    case Xamarin.Forms.Device.UWP:
+                        labAppVersion.Text = $"{AppInfo.VersionString}"; // Application Version (1.0.0)
+                        break;
 
-                        case Xamarin.Forms.Device.UWP:
-                            labAppVersion.Text = $"{AppInfo.VersionString}"; // Application Version (1.0.0)
-                            break;
+                    default:
+                        break;
+                }
 
-                        default:
-                            break;
-                    }
-
-                    if (App.AdStateCurrent == true)
-                    {
-                        slAdblock.IsVisible = false;
-                    }
-                    else
-                    {
-                        switch (Connectivity.NetworkAccess)
-                        {
-                            case NetworkAccess.Internet:
-                            case NetworkAccess.ConstrainedInternet:
-                                break;
-
-                            default:
-                                return;
-                        }
-
-                        CheckPurchased();
-                    }
-                });
+                IsBusy = false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Что-то пошло не так
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -109,8 +75,10 @@ namespace MUDAPP.Views.Settings
                     SettingsContent.ColumnDefinitions[2].Width = 0;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                return;
             }
         }
 
@@ -118,14 +86,14 @@ namespace MUDAPP.Views.Settings
         {
             try
             {
-                Xamarin.Essentials.Preferences.Set("currentLanguage", settingsViewModel.LangCollection[PickerLanguages.SelectedIndex].LANGNAME);
+                Xamarin.Essentials.Preferences.Set("currentLanguage", settingsViewModel?.LangCollection[PickerLanguages.SelectedIndex].LANGNAME);
                 AppResource.Culture = new System.Globalization.CultureInfo(App.AppLanguage);
 
-                //((App)Application.Current).MainPage = new MainPage(); // Refresh App
-                ((App)Application.Current).MainPage = new AppShell(); // Refresh App
+                App.Current.MainPage = new AppShell();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Xamarin.Forms.Device.BeginInvokeOnMainThread(async () => { await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); }); // Что-то пошло не так
                 return;
             }
         }
@@ -134,7 +102,7 @@ namespace MUDAPP.Views.Settings
         {
             try
             {
-                Xamarin.Essentials.Preferences.Set("currentTheme", settingsViewModel.ThemesCollection[PickerThemes.SelectedIndex].THEMENAME);
+                Xamarin.Essentials.Preferences.Set("currentTheme", settingsViewModel?.ThemesCollection[PickerThemes.SelectedIndex].THEMENAME);
 
                 switch (settingsViewModel.ThemesCollection[PickerThemes.SelectedIndex].THEMENAME)
                 {
@@ -155,13 +123,13 @@ namespace MUDAPP.Views.Settings
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Xamarin.Forms.Device.BeginInvokeOnMainThread(async () => { await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); }); // Что-то пошло не так
                 return;
             }
         }
 
-        // hardware back button
         protected override bool OnBackButtonPressed()
         {
             base.OnBackButtonPressed();
@@ -172,10 +140,7 @@ namespace MUDAPP.Views.Settings
                 {
                     if (await DisplayAlert(AppResource.messageTitleExit, AppResource.messageExit, AppResource.messageOk, AppResource.messageСancel))
                     {
-                        if (Xamarin.Forms.Device.RuntimePlatform == Xamarin.Forms.Device.Android)
-                        {
-                            DependencyService.Get<Services.ICloseApplication>().CloseApp();
-                        }
+                        System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
                     }
                 });
             }
@@ -192,15 +157,14 @@ namespace MUDAPP.Views.Settings
         {
             try
             {
-                Device.BeginInvokeOnMainThread(async () => { await Shell.Current.GoToAsync(settingsViewModel._SelectedItem.TargetName); });
+                Xamarin.Forms.Device.BeginInvokeOnMainThread(async () => { await Shell.Current.GoToAsync(settingsViewModel._SelectedItem.TargetName); });
+                //MasterDetailPage mainPage = App.Current.MainPage as MasterDetailPage;
+                //mainPage.Detail = new NavigationPage((Page)Activator.CreateInstance(settingsViewModel._SelectedItem.TargetType));
             }
             catch (Exception ex)
             {
                 // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                Xamarin.Forms.Device.BeginInvokeOnMainThread(async () => { await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); });
                 return;
             }
         }
@@ -212,7 +176,7 @@ namespace MUDAPP.Views.Settings
 
         private void Tapped_siteProject(object sender, EventArgs e)
         {
-            Launcher.OpenAsync(new Uri("https://sites.google.com/view/owand/MUDCatalog"));
+            Launcher.OpenAsync(new Uri("https://sites.google.com/view/owand/drilling-ecatalog"));
         }
 
         private void Tapped_mailAuthor(object sender, EventArgs e)
@@ -255,10 +219,10 @@ namespace MUDAPP.Views.Settings
             switch (Xamarin.Forms.Device.RuntimePlatform)
             {
                 case Xamarin.Forms.Device.Android:
-                    Launcher.OpenAsync(new Uri("https://www.microsoft.com/store/apps/9NNR8X05NNR9"));
+                    Launcher.OpenAsync(new Uri("https://www.microsoft.com/store/apps/9P1C0XGRCMNX"));
                     break;
                 case Xamarin.Forms.Device.UWP:
-                    Launcher.OpenAsync(new Uri("ms-windows-store://pdp/?productid=9NNR8X05NNR9"));
+                    Launcher.OpenAsync(new Uri("ms-windows-store://review/?productid=9P1C0XGRCMNX"));
                     break;
                 default:
                     break;
@@ -267,7 +231,168 @@ namespace MUDAPP.Views.Settings
 
         private void OpenGooglePlay()
         {
-            Launcher.OpenAsync(new Uri("https://play.google.com/store/apps/details?id=com.plowand.mudapp"));
+            Launcher.OpenAsync(new Uri("https://play.google.com/store/apps/details?id=com.plowand.decapp"));
+        }
+
+        #endregion
+
+        //------------------Backup----------------------
+        #region Backup events
+        private async void OnUploadBackupAsync(object sender, EventArgs e)
+        {
+            switch (Connectivity.NetworkAccess)
+            {
+                case NetworkAccess.Internet:
+                case NetworkAccess.ConstrainedInternet:
+                    // Connection to internet is available
+                    bool dialog = await DisplayAlert(AppResource.messageTitleAction, AppResource.DBUpload, AppResource.messageOk, AppResource.messageСancel);
+                    if (dialog)
+                    {
+                        IsBusy = true;  // Затеняем задний фон и запускаем ProgressRing
+                        labActivityUpload.IsVisible = true;
+                        SettingsContent.IsEnabled = false;
+
+                        try
+                        {
+                            App.Database.Dispose();
+                            App.Database.Close();
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+
+                            // Создание сеанса загрузки
+                            UploadSession uploadSession = await AuthenticationHelper.GetAuthenticatedClient().Me.Drive.Special.AppRoot.ItemWithPath(Constants.dbName).CreateUploadSession().Request().PostAsync();
+                            Stream fileStream = System.IO.File.OpenRead(Constants.DatabasePath);
+
+                            using (fileStream)
+                            {
+                                // Создание задачи
+                                LargeFileUploadTask<DriveItem> fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, 320 * 1024);
+
+                                // Загрузить файл
+                                UploadResult<DriveItem> uploadResult = null;
+                                uploadResult = await fileUploadTask.UploadAsync();
+                                DriveItem itemResult = null;
+                                itemResult = uploadResult.ItemResponse;
+
+                                if (uploadResult.UploadSucceeded)
+                                {
+                                    await DisplayAlert(AppResource.messageSuccess, AppResource.messageSuccessUpload, AppResource.messageOk);
+                                }
+                            }
+
+                            fileStream.Close();
+                            fileStream.Dispose();
+
+                            App.Database.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlert(AppResource.messageError, AppResource.BackupError + "\n\n" + ex.Message, AppResource.messageOk);
+                        }
+                        IsBusy = false;
+                        labActivityUpload.IsVisible = false;
+                        SettingsContent.IsEnabled = true;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                    break;
+                default:
+
+                    await DisplayAlert(AppResource.messageError, "Oops, looks like you don't have internet connection :(", AppResource.messageOk); // Что-то пошло не так
+                    return;
+            }
+        }
+
+        private async void OnDownloadBackup(object sender, EventArgs e)
+        {
+            switch (Connectivity.NetworkAccess)
+            {
+                case NetworkAccess.Internet:
+                case NetworkAccess.ConstrainedInternet:
+                    // Connection to internet is available
+                    bool dialog = await DisplayAlert(AppResource.messageTitleAction, AppResource.DBDownload, AppResource.messageOk, AppResource.messageСancel);
+                    if (dialog)
+                    {
+                        IsBusy = true; // Затеняем задний фон и запускаем ProgressRing
+                        labActivityDownload.IsVisible = true;
+                        SettingsContent.IsEnabled = false;
+
+                        Stream contentStream;
+                        DriveItem foundFile;
+                        Stream fileStream;
+
+                        try
+                        {
+                            App.Database.Dispose();
+                            App.Database.Close();
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+
+                            IDriveItemRequestBuilder request = AuthenticationHelper.GetAuthenticatedClient().Me.Drive.Special.AppRoot.ItemWithPath(Constants.dbName);
+                            foundFile = await request.Request().GetAsync();
+                            fileStream = new FileStream(Constants.DatabasePath, FileMode.Open);
+
+                            if (foundFile == null)
+                            {
+                                await DisplayAlert(AppResource.messageError, "Нет резервной копии базы данных!", AppResource.messageOk);
+                                IsBusy = false;
+                                return;
+                            }
+
+                            contentStream = await request.Content.Request().GetAsync();
+
+                            if (contentStream == null)
+                            {
+                                await DisplayAlert(AppResource.messageError, "Резервная копии базы данных пуста!", AppResource.messageOk);
+                                IsBusy = false;
+                                return;
+                            }
+
+                            // Save the retrieved stream to the local drive
+                            using (fileStream)
+                            {
+                                using (BinaryWriter writer = new BinaryWriter(fileStream))
+                                {
+                                    contentStream.Position = 0;
+                                    using (BinaryReader reader = new BinaryReader(contentStream))
+                                    {
+                                        byte[] bytes;
+                                        do
+                                        {
+                                            bytes = reader.ReadBytes(1024);
+                                            writer.Write(bytes);
+                                        }
+                                        while (bytes.Length == 1024);
+                                    }
+                                }
+                            }
+
+                            fileStream.Close();
+                            fileStream.Dispose();
+                            contentStream.Close();
+                            contentStream.Dispose();
+                            await DisplayAlert(AppResource.messageSuccess, AppResource.messageSuccessDownload, AppResource.messageOk);
+                        }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
+                        }
+                        IsBusy = false;
+                        labActivityDownload.IsVisible = false;
+                        SettingsContent.IsEnabled = true;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                    break;
+                default:
+
+                    await DisplayAlert(AppResource.messageError, "Oops, looks like you don't have internet connection :(", AppResource.messageOk); // Что-то пошло не так
+                    return;
+            }
         }
 
         #endregion
@@ -275,108 +400,16 @@ namespace MUDAPP.Views.Settings
         //------------------Purchases----------------------
         #region Purchases events
 
-        private async void AdblockPurchase(object sender, EventArgs e)
+        private async void ProVersionPurchase(object sender, EventArgs e)
         {
-            if (!Plugin.InAppBilling.CrossInAppBilling.IsSupported)
-            {
-                return;
-            }
-
-            IInAppBilling billing = Plugin.InAppBilling.CrossInAppBilling.Current;
             try
             {
-                // For Android
-                bool connected = await billing.ConnectAsync(Plugin.InAppBilling.Abstractions.ItemType.InAppPurchase);
-                if (!connected)
-                {
-                    await Application.Current.MainPage.DisplayAlert(AppResource.messageError, AppResource.NoConnected, AppResource.messageOk);
-                    return;
-                }
-
-                InAppBillingPurchase purchase = await billing.PurchaseAsync("adblock", Plugin.InAppBilling.Abstractions.ItemType.InAppPurchase, "apppayload");
-                if (purchase == null) // Покупка неудачна
-                {
-                    return;
-                }
-                else if (purchase.State == Plugin.InAppBilling.Abstractions.PurchaseState.Purchased) // Покупка успешна
-                {
-                    App.AdStateCurrent = true;
-                    slAdblock.IsVisible = false;
-                }
+                await settingsViewModel.ProVersionPurchase();
             }
-            catch (Plugin.InAppBilling.Abstractions.InAppBillingPurchaseException ex)
+            catch (Exception ex) // Что-то пошло не так
             {
-                // Что-то пошло не так
                 await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
                 return;
-            }
-            catch (Exception ex)
-            {
-                // Что-то пошло не так
-                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                return;
-            }
-            finally
-            {
-                await billing.DisconnectAsync();
-                billing.Dispose();
-            }
-        }
-
-        // Check Purchases
-        private async void CheckPurchased()
-        {
-            IInAppBilling billing = CrossInAppBilling.Current;
-            try
-            {
-                if (billing == null)
-                {
-                    return;
-                }
-
-                bool connected = await CrossInAppBilling.Current.ConnectAsync(ItemType.InAppPurchase);
-                if (!connected)
-                {
-                    return;
-                }
-
-                //check purchases
-                IEnumerable<InAppBillingPurchase> purchases = await billing.GetPurchasesAsync(ItemType.InAppPurchase);
-                if (purchases == null)
-                {
-                    return;
-                }
-
-                InAppBillingPurchase ADBlock = purchases.FirstOrDefault(p => p.ProductId == "adblock");
-                if ((ADBlock == null) || (ADBlock.State == PurchaseState.Refunded) || (ADBlock.State == PurchaseState.Canceled))   // Покупка неудачна
-                {
-                    App.AdStateCurrent = false;
-                }
-                else if ((ADBlock.State == PurchaseState.Purchased) || (ADBlock.State == PurchaseState.Purchasing))   // Покупка успешна
-                {
-                    App.AdStateCurrent = true;
-                }
-
-                if (App.AdStateCurrent == true)
-                {
-                    slAdblock.IsVisible = false;
-                }
-            }
-            catch (InAppBillingPurchaseException purchaseEx)
-            {
-                // Что-то пошло не так
-                await Application.Current.MainPage.DisplayAlert(AppResource.messageError, purchaseEx.Message, AppResource.messageOk);
-                return;
-            }
-            catch (Exception)
-            {
-                // Что-то пошло не так
-                return;
-            }
-            finally
-            {
-                await billing.DisconnectAsync();
-                billing.Dispose();
             }
         }
 
