@@ -26,11 +26,11 @@ namespace MUDAPP.Views.Settings
             Routing.RegisterRoute(nameof(CalcSpacerVolPage), typeof(CalcSpacerVolPage));
 
 
-            GoMudCatalogCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(MudCatalogPage)); /*Shell.Current.FlyoutIsPresented = false;*/ });
-            GoMudTypeCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(MudTypePage)); /*Shell.Current.FlyoutIsPresented = false;*/ });
-            GoCalcVolCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(CalcCementVolPage)); /*Shell.Current.FlyoutIsPresented = false;*/ });
-            GoCalcWeitCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(CalcCementWeitPage)); /*Shell.Current.FlyoutIsPresented = false;*/ });
-            GoCalcSpacerCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(CalcSpacerVolPage)); /*Shell.Current.FlyoutIsPresented = false;*/ });
+            GoMudCatalogCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(MudCatalogPage)); Shell.Current.FlyoutIsPresented = false; });
+            GoMudTypeCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(MudTypePage)); Shell.Current.FlyoutIsPresented = false; });
+            GoCalcVolCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(CalcCementVolPage)); Shell.Current.FlyoutIsPresented = false; });
+            GoCalcWeitCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(CalcCementWeitPage)); Shell.Current.FlyoutIsPresented = false; });
+            GoCalcSpacerCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(CalcSpacerVolPage)); Shell.Current.FlyoutIsPresented = false; });
 
             Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
             GoToSettingsCommand = new Command(async () => { await Shell.Current.GoToAsync(nameof(SettingsPage)); Shell.Current.FlyoutIsPresented = false; });
