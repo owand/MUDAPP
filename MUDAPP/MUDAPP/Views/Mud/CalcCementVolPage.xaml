@@ -49,18 +49,14 @@
                        VerticalOptions="Center" FontSize="16" />
                 <!-- SaveCommandBar -->
                 <StackLayout Grid.Column="3" x:Name="SaveCommandBar" Orientation="Horizontal" HorizontalOptions="End" Spacing="0">
-                    <Button x:Name="CloseButton" Text="&#xF073A;" Released="OnCancel" />
-                    <Button x:Name="SaveButton" Text="&#xF0193;" Released="OnSave" />
+                    <Button Text="{StaticResource CancelIcon}" Released="OnCancel" />
+                    <Button Text="{StaticResource SaveIcon}" Released="OnSave" />
                 </StackLayout>
             </Grid>
 
             <!--Content-->
             <ScrollView x:Name="Detail" VerticalOptions="FillAndExpand">
-                <Grid x:Name="FormulaContent" ColumnSpacing="0" RowSpacing="0" VerticalOptions="FillAndExpand">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
+                <Grid x:Name="FormulaContent" ColumnSpacing="0" RowSpacing="0" VerticalOptions="FillAndExpand" RowDefinitions="Auto, *">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{x:OnIdiom Tablet='500', Desktop='500', Phone='*'}" />
                         <ColumnDefinition Width="{x:OnIdiom Tablet='*', Desktop='*', Phone='0'}" />
@@ -77,28 +73,13 @@
                         <Label Text="(ODcas - Tcas x 2)^2 х Lhcp]" FontAttributes="Bold" Margin="0,0,0,8" />
                     </StackLayout>
                     <!-- Formula parameters -->
-                    <Grid Grid.Column="0" Grid.Row="1" Margin="12,12,12,40" ColumnSpacing="0" RowSpacing="0" HorizontalOptions="FillAndExpand" VerticalOptions="Start">
+                    <Grid Grid.Column="0" Grid.Row="1" Margin="12,12,12,40" ColumnSpacing="0" RowSpacing="0" HorizontalOptions="FillAndExpand" VerticalOptions="Start"
+                          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="68" />
                             <ColumnDefinition />
                             <ColumnDefinition Width="{x:OnPlatform Android='88', iOS='88', UWP='100'}" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
 
                         <!-- coefficient of cement slurry -->
                         <Label Grid.Row="0" Grid.Column="0" Text="Ccs" FontAttributes="Bold" Margin="0,8,0,0" VerticalOptions="Center" />
@@ -126,7 +107,7 @@
                         <Label Grid.Row="2" Grid.Column="0" Text="Dwell" FontAttributes="Bold" Margin="0,8,0,0" VerticalOptions="Center" />
                         <Label Grid.Row="2" Grid.Column="1" Text="{x:Static resources:AppResource.FormulaDwell}" Margin="0,8,8,0" VerticalOptions="Center" />
                         <Picker x:Name="picDwell" Grid.Row="2" Grid.Column="2" Margin="0,12,0,0" SelectedIndexChanged="OnSelectedIndexChanged"
-                                ItemsSource="{Binding Collection}" SelectedItem="{Binding BITODNAME, Mode=TwoWay}" ItemDisplayBinding="{Binding BITODNAME}" VerticalOptions="Center" />
+                                ItemsSource="{Binding BitCollection}" SelectedItem="{Binding BITODNAME, Mode=TwoWay}" ItemDisplayBinding="{Binding BITODNAME}" VerticalOptions="Center" />
 
 
                         <!-- !!!!!!!!!!!!!!!!! -->
@@ -136,11 +117,11 @@
                         <!-- casing type -->
                         <Label Grid.Row="4" Grid.Column="1" Text="{x:Static resources:AppResource.TypePipes}" Margin="0,8,20,0" VerticalOptions="Center" HorizontalOptions="End" />
                         <Picker x:Name="picPipeType" Grid.Row="4" Grid.Column="2" Margin="0,12,0,0" SelectedIndexChanged="ChangePipeType" VerticalOptions="Center"
-                                ItemsSource="{Binding Collection}" SelectedItem="{Binding TYPEID, Mode=TwoWay}" ItemDisplayBinding="{Binding TYPENAME}" />
+                                ItemsSource="{Binding PipesCollection}" ItemDisplayBinding="{Binding TYPENAME}" />
                         <Label Grid.Row="5" Grid.Column="0" Text="ODcas" FontAttributes="Bold" Margin="0,8,0,0" VerticalOptions="Center" />
                         <Label Grid.Row="5" Grid.Column="1" Text="{x:Static resources:AppResource.FormulaDoutCasing}" Margin="0,8,8,0" VerticalOptions="Center" />
                         <Picker x:Name="picODcas" Grid.Row="5" Grid.Column="2" Margin="0,12,0,0" SelectedIndexChanged="ChangePipeOD" VerticalOptions="Center"
-                                ItemsSource="{Binding PipesODList}" SelectedItem="{Binding PIPESOD, Mode=TwoWay}" ItemDisplayBinding="{Binding PIPESOD}" >
+                                ItemsSource="{Binding PipesODList}" ItemDisplayBinding="{Binding PIPESOD}" >
                             <Picker.Triggers>
                                 <DataTrigger TargetType="Picker" Binding="{Binding Source={x:Reference picPipeType}, Path=SelectedIndex}" Value="-1" >
                                     <Setter Property="IsEnabled" Value="False" />
@@ -152,7 +133,7 @@
                         <Label Grid.Row="6" Grid.Column="0" Text="Tcas" FontAttributes="Bold" Margin="0,8,0,0" VerticalOptions="Center" />
                         <Label Grid.Row="6" Grid.Column="1" Text="{x:Static resources:AppResource.FormulaTcasing}" Margin="0,8,8,0" VerticalOptions="Center" />
                         <Picker x:Name="picTcas" Grid.Row="6" Grid.Column="2" Margin="0,12,0,0" SelectedIndexChanged="OnSelectedIndexChanged" VerticalOptions="Center"
-                                ItemsSource="{Binding PipesTWList}" SelectedItem="{Binding PIPESWALL, Mode=TwoWay}" ItemDisplayBinding="{Binding PIPESWALL}" >
+                                ItemsSource="{Binding PipesTWList}" ItemDisplayBinding="{Binding PIPESWALL}" >
                             <Picker.Triggers>
                                 <DataTrigger TargetType="Picker" Binding="{Binding Source={x:Reference picODcas}, Path=SelectedIndex}" Value="-1" >
                                     <Setter Property="IsEnabled" Value="False" />
@@ -190,13 +171,13 @@
                         <!-- casing type -->
                         <Label Grid.Row="10" Grid.Column="1" Text="{x:Static resources:AppResource.TypePipes}" Margin="0,8,20,0" VerticalOptions="Center" HorizontalOptions="End" />
                         <Picker x:Name="picPrevPipeType" Grid.Row="10" Grid.Column="2" Margin="0,12,0,0" SelectedIndexChanged="ChangePrevPipeType" VerticalOptions="Center"
-                                ItemsSource="{Binding Collection}" SelectedItem="{Binding TYPEID, Mode=TwoWay}" ItemDisplayBinding="{Binding TYPENAME}" />
+                                ItemsSource="{Binding PipesCollection}" ItemDisplayBinding="{Binding TYPENAME}" />
 
                         <!-- outer diameter of the previous casing -->
                         <Label Grid.Row="11" Grid.Column="0" Text="ODpr.cas" FontAttributes="Bold" Margin="0,8,0,0" VerticalOptions="Center" />
                         <Label Grid.Row="11" Grid.Column="1" Text="{x:Static resources:AppResource.FormulaODPrevCasing}" Margin="0,8,8,0" VerticalOptions="Center" />
                         <Picker x:Name="picODprcas" Grid.Row="11" Grid.Column="2" Margin="0,12,0,0" SelectedIndexChanged="ChangePipePrevOD" VerticalOptions="Center"
-                                ItemsSource="{Binding PipesODList}" SelectedItem="{Binding PIPESOD, Mode=TwoWay}" ItemDisplayBinding="{Binding PIPESOD}" >
+                                ItemsSource="{Binding PipesPrevODList}" ItemDisplayBinding="{Binding PIPESOD}" >
                             <Picker.Triggers>
                                 <DataTrigger TargetType="Picker" Binding="{Binding Source={x:Reference picPrevPipeType}, Path=SelectedIndex}" Value="-1" >
                                     <Setter Property="IsEnabled" Value="False" />
@@ -208,7 +189,7 @@
                         <Label Grid.Row="12" Grid.Column="0" Text="Tpr.cas" FontAttributes="Bold" Margin="0,8,0,0" VerticalOptions="Center" />
                         <Label Grid.Row="12" Grid.Column="1" Text="{x:Static resources:AppResource.FormulaTPrevCasing}" Margin="0,8,8,0" VerticalOptions="Center" />
                         <Picker x:Name="picTprcas" Grid.Row="12" Grid.Column="2" Margin="0,12,0,0" SelectedIndexChanged="OnSelectedIndexChanged" VerticalOptions="Center"
-                                ItemsSource="{Binding PipesTWList}" SelectedItem="{Binding PIPESWALL, Mode=TwoWay}" ItemDisplayBinding="{Binding PIPESWALL}" >
+                                ItemsSource="{Binding PipesPrevTWList}" ItemDisplayBinding="{Binding PIPESWALL}" >
                             <Picker.Triggers>
                                 <DataTrigger TargetType="Picker" Binding="{Binding Source={x:Reference picODprcas}, Path=SelectedIndex}" Value="-1" >
                                     <Setter Property="IsEnabled" Value="False" />
@@ -242,9 +223,9 @@
             </ScrollView>
         </StackLayout>
 
-        <StackLayout IsVisible="{Binding IsBusy}" Padding="12" AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1">
-            <ActivityIndicator x:Name="indicator" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" IsEnabled="{Binding IsBusy}"
-                               Color="DarkOrange" HeightRequest="48" WidthRequest="48" BackgroundColor="Transparent" />
+        <StackLayout Padding="12" AbsoluteLayout.LayoutFlags="PositionProportional" AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1">
+            <ActivityIndicator x:Name="indicator" IsVisible="{Binding Source={x:Reference cementVolumePage}, Path=IsBusy}"
+                               IsRunning="{Binding Source={x:Reference cementVolumePage}, Path=IsBusy}" Color="DarkOrange" HeightRequest="48" WidthRequest="48" BackgroundColor="Transparent" />
         </StackLayout>
     </AbsoluteLayout>
 </ContentPage>
