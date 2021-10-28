@@ -11,6 +11,8 @@
        BackgroundColor="#2D353E"
        x:Class="MUDAPP.Views.Settings.AppShell">
 
+    
+    
     <Shell.Resources>
         <Style x:Key="BaseStyle" TargetType="Element">
             <Setter Property="Shell.BackgroundColor" Value="#2D353E" />
@@ -27,11 +29,15 @@
         <settings:FlyoutHeader />
     </Shell.FlyoutHeader>
 
+    <!--<Shell.FlyoutFooter>
+        <ShellContent Title="{x:Static resources:AppResource.SettingsApp}" ContentTemplate="{DataTemplate settings:SettingsPage}" />
+    </Shell.FlyoutFooter>-->
+
 
     <!--С помощью свойства Shell.ItemTemplate мы, до некоторой степени, можем настроить отображение FlyoutItem в левом меню.-->
     <Shell.ItemTemplate>
         <DataTemplate>
-            <Grid HeightRequest="{x:OnPlatform Android=48}" >
+            <Grid HeightRequest="48" ColumnDefinitions="0, *" ColumnSpacing="0" RowSpacing="0" Margin="0,0,0,0" >
                 <VisualStateManager.VisualStateGroups>
                     <VisualStateGroupList>
                         <VisualStateGroup x:Name="CommonStates">
@@ -39,57 +45,48 @@
                             <VisualState x:Name="Selected">
                                 <VisualState.Setters>
                                     <Setter Property="BackgroundColor" Value="{x:OnPlatform Android=DarkOrange}"/>
+                                    <!--<Setter Property="BackgroundColor" Value="DarkOrange"/>-->
                                 </VisualState.Setters>
                             </VisualState>
                         </VisualStateGroup>
                     </VisualStateGroupList>
                 </VisualStateManager.VisualStateGroups>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="0"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
                 <!--<Image Grid.Column="0" Source="{Binding FlyoutIcon}" HeightRequest="{x:OnPlatform Android=24, iOS=22, UWP=16}" />-->
-                <Label Grid.Column="1" Text="{Binding Title}" Margin="12,0,12,0" VerticalTextAlignment="Center" TextColor="White" />
+                <Label Grid.Column="1" Text="{Binding Title}" Margin="8,0,8,0" VerticalTextAlignment="Center" TextColor="White" />
             </Grid>
         </DataTemplate>
     </Shell.ItemTemplate>
 
-    <!--С помощью свойства Shell.ItemTemplate мы, до некоторой степени, можем настроить отображение FlyoutMenuItem в левом меню.-->
+    <!--С помощью свойства Shell.MenuItemTemplate мы, до некоторой степени, можем настроить отображение FlyoutMenuItem в левом меню.-->
     <Shell.MenuItemTemplate>
         <DataTemplate>
-            <Grid HeightRequest="{x:OnPlatform Android=48}" >
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="0"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <Grid HeightRequest="48" ColumnDefinitions="0, *" ColumnSpacing="0" RowSpacing="0" Margin="0,0,0,0" >
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroupList>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <VisualState x:Name="Normal" />
+                            <VisualState x:Name="Selected">
+                                <VisualState.Setters>
+                                    <Setter Property="BackgroundColor" Value="{x:OnPlatform Android=DarkOrange}"/>
+                                    <!--<Setter Property="BackgroundColor" Value="DarkOrange"/>-->
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateGroupList>
+                </VisualStateManager.VisualStateGroups>
                 <!--<Image Grid.Column="0" Source="{Binding FlyoutIcon}" HeightRequest="{x:OnPlatform Android=24, iOS=22, UWP=16}" />-->
-                <Label Grid.Column="1" Text="{Binding Text}" Margin="12,0,12,0" VerticalTextAlignment="Center" TextColor="White" />
+                <Label Grid.Column="1" Text="{Binding Text}" Margin="8,0,8,0" VerticalTextAlignment="Center" TextColor="White" />
             </Grid>
         </DataTemplate>
     </Shell.MenuItemTemplate>
 
 
-    <!--1й вариант-->
-    <!--<FlyoutItem Title="{x:Static resources:AppResource.TitleMudCatalog}" >
-        <ShellContent ContentTemplate="{DataTemplate contents:MudCatalogPage}" />
-    </FlyoutItem>-->
-    <!--2й вариант-->
-    <!--<ShellContent Title="{x:Static resources:AppResource.TitleBitDecode}" ContentTemplate="{DataTemplate contents:BitDecodePage}" Route="bitdecodepage" />-->
-    <!--3й вариант-->
-    <!--<contents:BitDecodePage />-->
-    <!--4й вариант-->
+
+    <!-- реагенты и цементы  -->
     <MenuItem Text="{x:Static resources:AppResource.TitleMudCatalog}" Command="{Binding GoMudCatalogCommand}" />
-
-    <!--4й вариант-->
     <MenuItem Text="{x:Static resources:AppResource.TitleMudType}" Command="{Binding GoMudTypeCommand}" />
-
-    <!--4й вариант-->
     <MenuItem Text="{x:Static resources:AppResource.TitleCalcCementVol}" Command="{Binding GoCalcVolCommand}" />
-
-    <!--4й вариант-->
     <MenuItem Text="{x:Static resources:AppResource.TitleCalcCementWeight}" Command="{Binding GoCalcWeitCommand}" />
-
-    <!--4й вариант-->
     <MenuItem Text="{x:Static resources:AppResource.TitleCalcSpacerVol}" Command="{Binding GoCalcSpacerCommand}" />
 
 

@@ -1,6 +1,6 @@
-﻿using MUDAPP.Resources;
+﻿using Microsoft.Graph;
+using MUDAPP.Resources;
 using MUDAPP.Services;
-using Microsoft.Graph;
 using System;
 using System.IO;
 using Xamarin.Essentials;
@@ -176,7 +176,7 @@ namespace MUDAPP.Views.Settings
 
         private void Tapped_siteProject(object sender, EventArgs e)
         {
-            Launcher.OpenAsync(new Uri("https://sites.google.com/view/owand/drilling-ecatalog"));
+            Launcher.OpenAsync(new Uri("https://sites.google.com/view/owand/MUDCatalog"));
         }
 
         private void Tapped_mailAuthor(object sender, EventArgs e)
@@ -219,10 +219,10 @@ namespace MUDAPP.Views.Settings
             switch (Xamarin.Forms.Device.RuntimePlatform)
             {
                 case Xamarin.Forms.Device.Android:
-                    Launcher.OpenAsync(new Uri("https://www.microsoft.com/store/apps/9P1C0XGRCMNX"));
+                    Launcher.OpenAsync(new Uri("https://www.microsoft.com/store/apps/9NNR8X05NNR9"));
                     break;
                 case Xamarin.Forms.Device.UWP:
-                    Launcher.OpenAsync(new Uri("ms-windows-store://review/?productid=9P1C0XGRCMNX"));
+                    Launcher.OpenAsync(new Uri("ms-windows-store://review/?productid=9NNR8X05NNR9"));
                     break;
                 default:
                     break;
@@ -231,7 +231,7 @@ namespace MUDAPP.Views.Settings
 
         private void OpenGooglePlay()
         {
-            Launcher.OpenAsync(new Uri("https://play.google.com/store/apps/details?id=com.plowand.decapp"));
+            Launcher.OpenAsync(new Uri("https://play.google.com/store/apps/details?id=com.plowand.mudapp"));
         }
 
         #endregion

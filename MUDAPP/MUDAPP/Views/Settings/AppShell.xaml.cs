@@ -18,9 +18,6 @@ namespace MUDAPP.Views.Settings
         {
             InitializeComponent();
 
-            //CurrentItem = settingsPage;
-            //CurrentItem = new ShellContent() { Content = new ContentsPage() };
-
 
             Routing.RegisterRoute(nameof(MudCatalogPage), typeof(MudCatalogPage));
             Routing.RegisterRoute(nameof(MudTypePage), typeof(MudTypePage));
