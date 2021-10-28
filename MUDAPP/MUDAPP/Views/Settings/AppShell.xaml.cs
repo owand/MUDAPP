@@ -18,7 +18,7 @@ namespace MUDAPP.Views.Settings
         {
             InitializeComponent();
 
-            CurrentItem = settingsPage;
+            //CurrentItem = settingsPage;
             //CurrentItem = new ShellContent() { Content = new ContentsPage() };
 
 
