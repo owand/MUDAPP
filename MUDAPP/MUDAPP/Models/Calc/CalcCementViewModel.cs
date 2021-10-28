@@ -1,30 +1,132 @@
-﻿using MUDAPP.Models.Mud;
+﻿using MUDAPP.Models.BHA;
+using MUDAPP.Models.Mud;
 using MUDAPP.Models.Pipes;
 using SQLite;
 using SQLiteNetExtensions.Attributes;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Xamarin.Forms;
 
 namespace MUDAPP.Models.Calc
 {
     public class CalcCementViewModel : ViewModelBase
     {
-        private readonly SQLiteConnection database = DependencyService.Get<MUDAPP.Services.ISQLite>().DbConnection();
-        private static readonly object collisionLock = new object();
+        private static readonly object collisionLock = new object(); //Заглушка для блокирования одновременных операций с бд, если к базе данных может обращаться сразу несколько потоков
         public ObservableCollection<CalcCementModel> CalcCement { get; set; }
         public CalcCementModel CalcCementItem { get; set; }
 
+
+        public List<BitODModel> bitCollection = App.Database.Table<BitODModel>().OrderBy(a => a.BITOD).ToList();
+        public List<BitODModel> BitCollection
+        {
+            get => bitCollection;
+            set
+            {
+                bitCollection = value;
+                OnPropertyChanged();
+            }
+        }
+        public int GetDwellIndex()
+        {
+            return BitCollection.IndexOf(BitCollection.FirstOrDefault(X => X.BITOD == CalcCementItem.DWELL));
+        }
+
+
+        public List<PipesTypeModel> pipesCollection = App.Database.Table<PipesTypeModel>().OrderBy(a => a.TYPENAME).ToList();
+        public List<PipesTypeModel> PipesCollection
+        {
+            get => pipesCollection;
+            set
+            {
+                pipesCollection = value;
+                OnPropertyChanged();
+            }
+        }
+        public int GetPipeTypeIndex()
+        {
+            return PipesCollection.IndexOf(PipesCollection.FirstOrDefault(X => X.TYPEID == CalcCementItem.PIPESTYPEID));
+        }
+        public int GetPrevPipeTypeIndex()
+        {
+            return PipesCollection.IndexOf(PipesCollection.FirstOrDefault(X => X.TYPEID == CalcCementItem.PIPEPREVTYPEID));
+        }
+
+
+        public ObservableCollection<PipesModel> pipesODList;
+        public ObservableCollection<PipesModel> PipesODList
+        {
+            get => pipesODList;
+            set
+            {
+                pipesODList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<PipesModel> pipesPrevODList;
+        public ObservableCollection<PipesModel> PipesPrevODList
+        {
+            get => pipesPrevODList;
+            set
+            {
+                pipesPrevODList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<PipesModel> GetPipesODList(string FilterType)
+        {
+            List<PipesModel> _collection = App.Database.Table<PipesModel>().Select(a => a).
+                                           Where(a => string.IsNullOrEmpty(FilterType) || a.TYPEID.ToString().Equals(FilterType)).
+                                           GroupBy(a => a.PIPESOD).Select(a => a.First()).OrderBy(a => a.PIPESOD).ToList();
+
+            return new ObservableCollection<PipesModel>(_collection);
+        }
+
+
+        public ObservableCollection<PipesModel> pipesTWList;
+        public ObservableCollection<PipesModel> PipesTWList
+        {
+            get => pipesTWList;
+            set
+            {
+                pipesTWList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<PipesModel> pipesPrevTWList;
+        public ObservableCollection<PipesModel> PipesPrevTWList
+        {
+            get => pipesPrevTWList;
+            set
+            {
+                pipesPrevTWList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<PipesModel> GetPipesTWList(string FilterType, string FilterPipesOD)
+        {
+            List<PipesModel> _collection = App.Database.Table<PipesModel>().Select(a => a).
+                        Where(a => a.TYPEID.ToString().Equals(FilterType) && a.PIPESOD.ToString().Equals(FilterPipesOD)).
+                        OrderBy(a => a.PIPESWALL).ToList();
+
+            return new ObservableCollection<PipesModel>(_collection);
+        }
+
+
+
         public CalcCementViewModel()
         {
-            CalcCement = new ObservableCollection<CalcCementModel>(database.Table<CalcCementModel>());
+            CalcCement = new ObservableCollection<CalcCementModel>(App.Database.Table<CalcCementModel>());
             // If the table is empty, initialize the collection
-            if (!database.Table<CalcCementModel>().Any())
+            if (!App.Database.Table<CalcCementModel>().Any())
             {
                 AddFirstItem();
             }
 
-            CalcCementItem = database.Table<CalcCementModel>().First();
+            CalcCementItem = App.Database.Table<CalcCementModel>().First();
         }
 
         // Создаем новую пустую запись в основной коллекции
@@ -59,15 +161,15 @@ namespace MUDAPP.Models.Calc
         }
 
         // Сохраняем или создаем и сохраняем новую запись.
-        public void UpdateItem(CalcCementModel temp)
+        public void UpdateItem()
         {
             try
             {
                 lock (collisionLock)
                 {
-                    database.Update(temp);
+                    App.Database.Update(CalcCementItem);
                 }
-                database.Close();
+                //App.Database.Close();
             }
             catch (SQLiteException)
             {
@@ -75,7 +177,6 @@ namespace MUDAPP.Models.Calc
         }
 
     }
-
 
 
 

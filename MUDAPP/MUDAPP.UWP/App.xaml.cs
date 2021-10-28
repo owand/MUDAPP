@@ -9,9 +9,6 @@ namespace MUDAPP.UWP
 {
     public sealed partial class App : Application
     {
-        // получаем имя базы данных
-        public string databaseName = MUDAPP.App.dbName;
-
         public App()
         {
             InitializeComponent();

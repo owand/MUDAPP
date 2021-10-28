@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using Xamarin.Forms;
 
-namespace MUDAPP.Models.Bits
+namespace MUDAPP.Models.BHA
 {
     public class BitODViewModel : ViewModelBase
     {
