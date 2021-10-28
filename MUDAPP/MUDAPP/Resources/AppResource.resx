@@ -1051,4 +1051,15 @@ mm</value>
     <value>Default</value>
     <comment>Тема приложения по умолчанию</comment>
   </data>
+  <data name="FilterError" xml:space="preserve">
+    <value>Active editing mode!</value>
+  </data>
+  <data name="DBDownload" xml:space="preserve">
+    <value>Restoring a database from a copy</value>
+    <comment>Заголовок для кнопки - Сохранить копию базы данных</comment>
+  </data>
+  <data name="DBUpload" xml:space="preserve">
+    <value>Saving a copy of the database</value>
+    <comment>Заголовок для кнопки - Сохранить копию базы данных</comment>
+  </data>
 </root>

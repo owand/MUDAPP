@@ -1,7 +1,11 @@
-﻿using MUDAPP.Resources;
-using MUDAPP.Services;
+﻿using MUDAPP.Models;
+using MUDAPP.Resources;
 using MUDAPP.Views.Settings;
+using SQLite;
+using System;
 using System.Globalization;
+using System.IO;
+using System.Reflection;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -12,8 +16,24 @@ namespace MUDAPP
     public partial class App : Application
     {
         // Переменные для базы данных
-        public const string dbName = "DBCatalog.db";
-        public const int dbVersion = 63;
+        public static SQLiteConnection database;
+        public static SQLiteConnection Database
+        {
+            get
+            {
+                try
+                {
+                    database = new SQLiteConnection(Constants.DatabasePath, Constants.Flags, false);
+                    return database;
+                }
+                catch (Exception ex)
+                {
+                    Application.Current.MainPage.DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                    System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
+                    return database = null;
+                }
+            }
+        }
 
         // Переменные для подключения приложения к личному account Microsoft, используя Microsoft Graph API
         public static string ClientID = "5b5004bd-2c71-4721-8343-ad94828c30ea";
@@ -35,10 +55,12 @@ namespace MUDAPP
         }
 
         //переменные для Purchases State
-        public static bool AdStateCurrent
+        public static readonly string ProductID = "statepro";
+
+        public static bool ProState
         {
-            get => Xamarin.Essentials.Preferences.Get("AdStateCurrent", false);
-            set => Xamarin.Essentials.Preferences.Set("AdStateCurrent", value);
+            get => Xamarin.Essentials.Preferences.Get("ProState", true);
+            set => Xamarin.Essentials.Preferences.Set("ProState", value);
         }
 
         public App()
@@ -48,9 +70,6 @@ namespace MUDAPP
                                            "IndicatorView_Experimental", "RadioButton_Experimental", "AppTheme_Experimental",
                                            "Markup_Experimental", "Expander_Experimental" });
             InitializeComponent();
-
-            // Create Data Base
-            DependencyService.Get<ISQLite>().CreateDBAsync();
 
             // Языковая культура приложения должна определяться как можно раньше.
             AppResource.Culture = new CultureInfo(AppLanguage);
@@ -75,12 +94,38 @@ namespace MUDAPP
                     break;
             }
 
+            if (ProState == false)
+            {
+                Device.BeginInvokeOnMainThread(async () => { await Settings.ProVersionCheck(); });
+            }
+
             MainPage = new AppShell();
         }
 
         protected override void OnStart()
         {
             // Handle when your app starts
+            try
+            {
+                if (!File.Exists(Constants.DatabasePath))
+                {
+                    CopyDBifNotExists();
+                }
+                else if (GetCurrentDBVersion() < Constants.dbVersion)
+                {
+                    Database.Dispose();
+                    Database.Close();
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+
+                    CopyDBifNotExists();
+                    Application.Current.MainPage.DisplayAlert("Congratulations! ", " The database has been updated!", AppResource.messageOk); // Что-то пошло не так
+                }
+            }
+            catch (Exception ex)
+            {
+                Application.Current.MainPage.DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+            }
         }
 
         protected override void OnSleep()
@@ -91,6 +136,83 @@ namespace MUDAPP
         protected override void OnResume()
         {
             // Handle when your app resumes
+        }
+
+
+        public void CopyDBifNotExists()
+        {
+            try
+            {
+                Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{GetType().Namespace}.{Constants.dbName}");
+                if (stream == null)
+                {
+                    Current.MainPage.DisplayAlert(AppResource.messageError, "The resource " + Constants.dbName + " was not loaded properly.", AppResource.messageOk); // Что-то пошло не так
+                    System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
+                    return;
+                }
+
+                // если база данных не существует (еще не скопирована)
+
+                //вариант 1
+                using (new StreamReader(stream))
+                {
+                    using (FileStream fs = new FileStream(Constants.DatabasePath, FileMode.Create))
+                    {
+                        stream.CopyTo(fs);  // копируем файл базы данных в нужное нам место
+                        fs.Flush();
+                    }
+                }
+
+                //вариант 2
+                //BinaryReader br = new BinaryReader(stream);
+                //using (br)
+                //{
+                //    //FileStream fs = new FileStream(Constants.DatabasePath, FileMode.Create);
+                //    using (BinaryWriter bw = new BinaryWriter(new FileStream(Constants.DatabasePath, FileMode.Create)))
+                //    {
+                //        byte[] buffer = new byte[2048];
+                //        int len;
+                //        while ((len = br.Read(buffer, 0, buffer.Length)) > 0)
+                //        {
+                //            bw.Write(buffer, 0, len);
+                //        }
+                //    }
+                //}
+            }
+            catch (Exception ex)
+            {
+                Application.Current.MainPage.DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                return;
+            }
+        }
+
+
+        // Get current Data Base Version
+        public int GetCurrentDBVersion()
+        {
+            int currentDbVersion;
+            try
+            {
+                if (Database != null)
+                {
+                    currentDbVersion = Database.ExecuteScalar<int>("pragma user_version");
+                    Database.Close();
+                    Database.Dispose();
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+                else
+                {
+                    currentDbVersion = 0;
+                }
+                return currentDbVersion;
+            }
+            catch (Exception ex)
+            {
+                currentDbVersion = 0;
+                Application.Current.MainPage.DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                return currentDbVersion;
+            }
         }
     }
 }

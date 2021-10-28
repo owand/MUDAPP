@@ -16,7 +16,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Plugin.InAppBilling" Version="2.0.0" />
+    <None Remove="DBCatalog.db" />
+    <None Remove="MaterialDesignIcons.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="DBCatalog.db" />
+    <EmbeddedResource Include="MaterialDesignIcons.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Graph" Version="4.7.0" />
+    <PackageReference Include="Plugin.InAppBilling" Version="4.0.2" />
     <PackageReference Include="sqlite-net-pcl" Version="1.8.116" />
     <PackageReference Include="SQLiteNetExtensions" Version="2.1.0" />
     <PackageReference Include="Xamarin.Forms" Version="5.0.0.2196" />  

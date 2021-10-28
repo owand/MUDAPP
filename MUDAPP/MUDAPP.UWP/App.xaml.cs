@@ -9,9 +9,6 @@ namespace MUDAPP.UWP
 {
     public sealed partial class App : Application
     {
-        // получаем имя базы данных
-        public string databaseName = MUDAPP.App.dbName;
-
         public App()
         {
             InitializeComponent();
@@ -30,7 +27,7 @@ namespace MUDAPP.UWP
 
                 rootFrame.NavigationFailed += OnNavigationFailed;
 
-                global::Xamarin.Forms.Forms.SetFlags(new string[] { "Shell_UWP_Experimental", "AppTheme_Experimental" });
+                //global::Xamarin.Forms.Forms.SetFlags(new string[] { "Shell_UWP_Experimental", "AppTheme_Experimental" });
                 Xamarin.Forms.Forms.Init(e);
 
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
@@ -44,9 +41,9 @@ namespace MUDAPP.UWP
 
             if (rootFrame.Content == null)
             {
-                // When the navigation stack isn't restored navigate to the first page,
-                // configuring the new page by passing required information as a navigation
-                // parameter
+                /// When the navigation stack isn't restored navigate to the first page,
+                /// configuring the new page by passing required information as a navigation
+                /// parameter
                 rootFrame.Navigate(typeof(MainPage), e.Arguments);
             }
             // Ensure the current window is active

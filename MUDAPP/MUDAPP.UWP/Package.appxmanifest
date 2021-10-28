@@ -8,7 +8,7 @@
 
   <Identity
     Name="34742AndreyOvcharenko.MUDCatalog"
-    Publisher="CN=1A88FC79-93F9-4E7D-BA4F-0D4691D1340C"
+    Publisher="CN=OWAND"
     Version="20.12.40.0" />
 
   <mp:PhoneIdentity PhoneProductId="d8a2bc91-857e-4d08-9bad-0d065eebe6d6" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>

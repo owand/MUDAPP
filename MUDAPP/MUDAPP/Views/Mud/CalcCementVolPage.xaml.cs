@@ -1,6 +1,4 @@
-﻿using MUDAPP.Models.Bits;
-using MUDAPP.Models.Calc;
-using MUDAPP.Models.Pipes;
+﻿using MUDAPP.Models.Calc;
 using MUDAPP.Resources;
 using System;
 using System.Linq;
@@ -12,110 +10,44 @@ namespace MUDAPP.Views.Mud
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class CalcCementVolPage : ContentPage
     {
-        private CalcCementViewModel viewModel = null;
-        public CalcCementModel calcCementItem = null;
-        private BitODViewModel bitODVM = null;
-        private PipesTypeViewModel pipesTypeVM = null;
-        private PipesFilterViewModel pipesODVM = null;
-        private PipesFilterViewModel pipesODprVM = null;
-        private PipesFilterViewModel pipesTVM = null;
-        private PipesFilterViewModel pipesTprVM = null;
+        private CalcCementViewModel viewModel;
 
         public double PI; // Число Пи
-        public int TypePipe { get; set; } // Переменная для фильтра по диаметру трубы
-        public int TypePipePrev { get; set; } // Переменная для фильтра по диаметру трубы
-        public string PipeOD { get; set; } // Переменная для фильтра по диаметру трубы
-        public string PipePrevOD { get; set; } // Переменная для фильтра по диаметру трубы
 
         public CalcCementVolPage()
         {
             InitializeComponent();
-            Shell.Current.FlyoutIsPresented = false;
 
             PI = 3.14159265358979323846;
 
             LayoutChanged += OnSizeChanged; // Определяем обработчик события, которое происходит, когда изменяется ширина или высота.
-            Shell.Current.Navigating += Current_Navigating; // Определяем обработчик события Shell.OnNavigating
         }
 
         // События непосредственно перед тем как страница становится видимой.
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
-            Device.BeginInvokeOnMainThread(async () =>
+
+            try
             {
-                indicator.IsRunning = true;
                 IsBusy = true; ;  // Затеняем задний фон и запускаем ProgressRing
-                await System.Threading.Tasks.Task.Delay(100);
 
-                if (viewModel == null) // Если не открыт Picer для выбора картинки в Android
-                {
-                    viewModel = new CalcCementViewModel();
-                }
-                BindingContext = viewModel;
-                calcCementItem = viewModel?.CalcCementItem; // Производим отбор текущей записи (переменная для загрузки картинки)
+                BindingContext = viewModel = viewModel ?? new CalcCementViewModel();
 
-                if (bitODVM == null) // Если не открыт Picer для выбора картинки в Android
-                {
-                    bitODVM = new BitODViewModel();
-                }
-                picDwell.BindingContext = bitODVM;
-                picDwell.SelectedIndex = bitODVM.Collection.IndexOf(bitODVM.Collection.Where(X => X.BITOD == calcCementItem.DWELL).FirstOrDefault());
+                picDwell.SelectedIndex = viewModel.GetDwellIndex();
 
                 //type of the casing
-                if (pipesTypeVM == null) // Если не открыт Picer для выбора картинки в Android
-                {
-                    pipesTypeVM = new PipesTypeViewModel();
-                }
-                picPipeType.BindingContext = picPrevPipeType.BindingContext = pipesTypeVM;
-                picPipeType.SelectedIndex = pipesTypeVM.Collection.IndexOf(pipesTypeVM.Collection.Where(X => X.TYPEID == calcCementItem.PIPESTYPEID).FirstOrDefault());
-                if (picPipeType.SelectedIndex >= 0)
-                {
-                    TypePipe = pipesTypeVM.Collection[picPipeType.SelectedIndex].TYPEID;
-                }
-
-                //outside diameter of the casing
-                pipesODVM = new PipesFilterViewModel(TypePipe.ToString(), string.Empty);
-                picODcas.BindingContext = pipesODVM;
-                picODcas.SelectedIndex = pipesODVM.PipesODList.IndexOf(pipesODVM.PipesODList.Where(X => X.PIPESOD == calcCementItem.ODCAS).FirstOrDefault());
-                if (picODcas.SelectedIndex >= 0)
-                {
-                    PipeOD = pipesODVM.PipesODList[picODcas.SelectedIndex].PIPESOD.ToString();
-                }
-                //thickness of the wall of the cemented casing
-                pipesTVM = new PipesFilterViewModel(TypePipe.ToString(), PipeOD);
-                picTcas.BindingContext = pipesTVM;
-                picTcas.SelectedIndex = pipesTVM.PipesTWList.IndexOf(pipesTVM.PipesTWList.Where(X => X.PIPESWALL == calcCementItem.TCAS).FirstOrDefault());
+                picPipeType.SelectedIndex = viewModel.GetPipeTypeIndex();
 
                 //type of the previous casing
-                picPrevPipeType.SelectedIndex = pipesTypeVM.Collection.IndexOf(pipesTypeVM.Collection.Where(X => X.TYPEID == calcCementItem.PIPEPREVTYPEID).FirstOrDefault());
-                if (picPrevPipeType.SelectedIndex >= 0)
-                {
-                    TypePipePrev = pipesTypeVM.Collection[picPrevPipeType.SelectedIndex].TYPEID;
-                }
-                //outer diameter of the previous casing
-                pipesODprVM = new PipesFilterViewModel(TypePipePrev.ToString(), string.Empty);
-                picODprcas.BindingContext = pipesODprVM;
-                picODprcas.SelectedIndex = pipesODprVM.PipesODList.IndexOf(pipesODprVM.PipesODList.Where(X => X.PIPESOD == calcCementItem.ODPRCAS).FirstOrDefault());
-                if (picODprcas.SelectedIndex >= 0)
-                {
-                    PipePrevOD = pipesODprVM.PipesODList[picODprcas.SelectedIndex].PIPESOD.ToString();
-                }
-                //thickness of the wall of the cemented casing
-                pipesTprVM = new PipesFilterViewModel(TypePipePrev.ToString(), PipePrevOD);
-                picTprcas.BindingContext = pipesTprVM;
-                picTprcas.SelectedIndex = pipesTprVM.PipesTWList.IndexOf(pipesTprVM.PipesTWList.Where(X => X.PIPESWALL == calcCementItem.TPRCAS).FirstOrDefault());
-                IsBusy = false;
-                indicator.IsRunning = false;
-            });
-        }
+                picPrevPipeType.SelectedIndex = viewModel.GetPrevPipeTypeIndex();
 
-        private void Current_Navigating(object sender, ShellNavigatingEventArgs e)
-        {
-            if (e.CanCancel)
+                IsBusy = false;
+            }
+            catch (Exception ex)
             {
-                e.Cancel(); // Позволяет отменить навигацию
-                OnBackButtonPressed();
+                await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
+                return;
             }
         }
 
@@ -172,31 +104,22 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                TypePipe = pipesTypeVM.Collection[picPipeType.SelectedIndex].TYPEID;
-
                 // очищаем диаметры
-                PipeOD = null;
-                pipesODVM = null;
+                viewModel.PipesODList = null;
                 picODcas.SelectedIndex = -1;
-                picODcas.SelectedItem = null;
                 picODcas.Behaviors.Clear();
 
                 // очищаем толщину стенки
                 picTcas.SelectedIndex = -1;
-                picTcas.SelectedItem = null;
                 picTcas.Behaviors.Clear();
-                pipesTVM = null;
 
-                pipesODVM = new PipesFilterViewModel(TypePipe.ToString(), string.Empty);
-                picODcas.BindingContext = pipesODVM;
+                //outside diameter of the casing
+                viewModel.PipesODList = viewModel.GetPipesODList(picPipeType.SelectedIndex < 0 ? null : viewModel.PipesCollection?[picPipeType.SelectedIndex].TYPEID.ToString());
+                picODcas.SelectedIndex = viewModel.PipesODList.IndexOf(viewModel.PipesODList.FirstOrDefault(X => X.PIPESOD == viewModel.CalcCementItem.ODCAS));
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -205,31 +128,22 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                TypePipePrev = pipesTypeVM.Collection[picPrevPipeType.SelectedIndex].TYPEID;
-
                 // очищаем диаметры
-                PipePrevOD = null;
-                pipesODprVM = null;
+                viewModel.PipesPrevODList = null;
                 picODprcas.SelectedIndex = -1;
-                picODprcas.SelectedItem = null;
                 picODprcas.Behaviors.Clear();
 
                 // очищаем толщину стенки
                 picTprcas.SelectedIndex = -1;
-                picTprcas.SelectedItem = null;
                 picTprcas.Behaviors.Clear();
-                pipesTprVM = null;
 
-                pipesODprVM = new PipesFilterViewModel(TypePipePrev.ToString(), string.Empty);
-                picODprcas.BindingContext = pipesODprVM;
+                //outer diameter of the previous casing
+                viewModel.PipesPrevODList = viewModel.GetPipesODList(picPrevPipeType.SelectedIndex < 0 ? null : viewModel.PipesCollection?[picPrevPipeType.SelectedIndex].TYPEID.ToString());
+                picODprcas.SelectedIndex = viewModel.PipesPrevODList.IndexOf(viewModel.PipesPrevODList.FirstOrDefault(X => X.PIPESOD == viewModel.CalcCementItem.ODPRCAS));
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -239,16 +153,15 @@ namespace MUDAPP.Views.Mud
         {
             if (picODcas.SelectedIndex >= 0)
             {
-                PipeOD = pipesODVM.PipesODList[picODcas.SelectedIndex].PIPESOD.ToString();
-
                 // очищаем толщину стенки
+                viewModel.PipesTWList = null;
                 picTcas.SelectedIndex = -1;
-                picTcas.SelectedItem = null;
-                pipesTVM = null;
                 picTcas.Behaviors.Clear();
 
-                pipesTVM = new PipesFilterViewModel(TypePipe.ToString(), PipeOD);
-                picTcas.BindingContext = pipesTVM;
+                //thickness of the wall of the cemented casing
+                viewModel.PipesTWList = viewModel.GetPipesTWList(picPipeType.SelectedIndex < 0 ? null : viewModel.PipesCollection?[picPipeType.SelectedIndex].TYPEID.ToString(),
+                                                                 picODcas.SelectedIndex < 0 ? null : viewModel.PipesODList?[picODcas.SelectedIndex].PIPESOD.ToString());
+                picTcas.SelectedIndex = viewModel.PipesTWList.IndexOf(viewModel.PipesTWList?.FirstOrDefault(X => X.PIPESWALL == viewModel.CalcCementItem.TCAS));
             }
             try
             {
@@ -262,16 +175,15 @@ namespace MUDAPP.Views.Mud
         {
             if (picODprcas.SelectedIndex >= 0)
             {
-                PipePrevOD = pipesODprVM.PipesODList[picODprcas.SelectedIndex].PIPESOD.ToString();
-
                 // очищаем толщину стенки
+                viewModel.PipesPrevTWList = null;
                 picTprcas.SelectedIndex = -1;
-                picTprcas.SelectedItem = null;
-                pipesTprVM = null;
                 picTprcas.Behaviors.Clear();
 
-                pipesTprVM = new PipesFilterViewModel(TypePipePrev.ToString(), PipePrevOD);
-                picTprcas.BindingContext = pipesTprVM;
+                //thickness of the wall of the cemented casing
+                viewModel.PipesPrevTWList = viewModel.GetPipesTWList(picPrevPipeType.SelectedIndex < 0 ? null : viewModel.PipesCollection?[picPrevPipeType.SelectedIndex].TYPEID.ToString(),
+                                                                     picODprcas.SelectedIndex < 0 ? null : viewModel.PipesPrevODList?[picODprcas.SelectedIndex].PIPESOD.ToString());
+                picTprcas.SelectedIndex = viewModel.PipesPrevTWList.IndexOf(viewModel.PipesPrevTWList?.FirstOrDefault(X => X.PIPESWALL == viewModel.CalcCementItem.TPRCAS));
             }
             try
             {
@@ -285,36 +197,30 @@ namespace MUDAPP.Views.Mud
         {
             try
             {
-                calcCementItem.CCS = decimal.Parse(edCcs.Text); //coefficient of cement slurry
-                calcCementItem.CCAV = decimal.Parse(edCcav.Text); //coefficient of cavernosity
-                calcCementItem.DWELL = bitODVM.Collection[picDwell.SelectedIndex].BITOD; //borehole diameter
+                viewModel.CalcCementItem.CCS = decimal.Parse(edCcs.Text); //coefficient of cement slurry
+                viewModel.CalcCementItem.CCAV = decimal.Parse(edCcav.Text); //coefficient of cavernosity
+                viewModel.CalcCementItem.DWELL = picDwell.SelectedIndex >= 0 ? viewModel.BitCollection[picDwell.SelectedIndex].BITOD : -1; //borehole diameter
 
-                calcCementItem.PIPESTYPEID = pipesTypeVM.Collection[picPipeType.SelectedIndex].TYPEID; //type of the casing
-                calcCementItem.ODCAS = pipesODVM.PipesODList[picODcas.SelectedIndex].PIPESOD; //outside diameter of the casing
-                calcCementItem.TCAS = pipesTVM.PipesODList[picTcas.SelectedIndex].PIPESWALL; //thickness of the wall of the cemented casing
+                viewModel.CalcCementItem.PIPESTYPEID = picPipeType.SelectedIndex >= 0 ? viewModel.PipesCollection[picPipeType.SelectedIndex].PIPESTYPEID : -1; //type of the casing
+                viewModel.CalcCementItem.ODCAS = picODcas.SelectedIndex >= 0 ? viewModel.PipesODList[picODcas.SelectedIndex].PIPESOD : -1; //outside diameter of the casing
+                viewModel.CalcCementItem.TCAS = picTcas.SelectedIndex >= 0 ? viewModel.PipesTWList[picTcas.SelectedIndex].PIPESWALL : -1; //thickness of the wall of the cemented casing
 
-                calcCementItem.LCAS = decimal.Parse(edLcas.Text); //casing length
-                calcCementItem.LHCP = decimal.Parse(edLhcp.Text); //HCP
+                viewModel.CalcCementItem.LCAS = decimal.Parse(edLcas.Text); //casing length
+                viewModel.CalcCementItem.LHCP = decimal.Parse(edLhcp.Text); //HCP
 
-                calcCementItem.PIPEPREVTYPEID = pipesTypeVM.Collection[picPrevPipeType.SelectedIndex].TYPEID; //type of the previous casing
-                calcCementItem.ODPRCAS = pipesODprVM.PipesODList[picODprcas.SelectedIndex].PIPESOD; //outer diameter of the previous casing
-                calcCementItem.TPRCAS = pipesTprVM.PipesODList[picTprcas.SelectedIndex].PIPESWALL; //thickness of the wall of the previous casing
+                viewModel.CalcCementItem.PIPEPREVTYPEID = picPrevPipeType.SelectedIndex >= 0 ? viewModel.PipesCollection[picPrevPipeType.SelectedIndex].PIPESTYPEID : -1; //type of the previous casing
+                viewModel.CalcCementItem.ODPRCAS = picODprcas.SelectedIndex >= 0 ? viewModel.PipesPrevODList[picODprcas.SelectedIndex].PIPESOD : -1; //outer diameter of the previous casing
+                viewModel.CalcCementItem.TPRCAS = picTprcas.SelectedIndex >= 0 ? viewModel.PipesPrevTWList[picTprcas.SelectedIndex].PIPESWALL : -1; //thickness of the wall of the previous casing
 
-                calcCementItem.LPRCAS = decimal.Parse(edLprcas.Text); //depth of descent of the previous column along the trunk
-                calcCementItem.LPRHCP = decimal.Parse(edLprhcp.Text); //PrevHCP
+                viewModel.CalcCementItem.LPRCAS = decimal.Parse(edLprcas.Text); //depth of descent of the previous column along the trunk
+                viewModel.CalcCementItem.LPRHCP = decimal.Parse(edLprhcp.Text); //PrevHCP
 
                 // Сохраняем изменения в текущей записи.
-                viewModel?.UpdateItem(calcCementItem);
-
-                //BindingContext = viewModel = new CalcViewModel();
+                viewModel?.UpdateItem();
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -325,25 +231,23 @@ namespace MUDAPP.Views.Mud
             {
                 edCcs.Text = 0.ToString("N2");
                 edCcav.Text = 0.ToString("N2");
-                picDwell.SelectedIndex = 0;
+                picDwell.SelectedIndex = -1;
 
-                picODcas.SelectedIndex = 0;
-                picTcas.SelectedIndex = 0;
+                picPipeType.SelectedIndex = -1;
+                picODcas.SelectedIndex = -1;
+                picTcas.SelectedIndex = -1;
                 edLcas.Text = 0.ToString("N2");
                 edLhcp.Text = 0.ToString("N2");
 
-                picODprcas.SelectedIndex = 0;
-                picTprcas.SelectedIndex = 0;
+                picPrevPipeType.SelectedIndex = -1;
+                picODprcas.SelectedIndex = -1;
+                picTprcas.SelectedIndex = -1;
                 edLprcas.Text = 0.ToString("N2");
                 edLprhcp.Text = 0.ToString("N2");
             }
             catch (Exception ex)
             {
-                // Что-то пошло не так
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk);
-                });
+                DisplayAlert(AppResource.messageError, ex.Message, AppResource.messageOk); // Что-то пошло не так
                 return;
             }
         }
@@ -362,13 +266,13 @@ namespace MUDAPP.Views.Mud
                 double Ccav = !string.IsNullOrWhiteSpace(edCcav.Text) ? Convert.ToDouble(edCcav.Text) : 1.2;
 
                 //borehole diameter
-                double Dwell = picDwell.SelectedIndex >= 0 ? Convert.ToDouble(bitODVM.Collection[picDwell.SelectedIndex].BITODNAME) : 0;
+                double Dwell = picDwell.SelectedIndex >= 0 ? Convert.ToDouble(viewModel.BitCollection[picDwell.SelectedIndex].BITODNAME) : 0;
 
                 //casing type
-                double ODcas = picODcas.SelectedIndex >= 0 ? Convert.ToDouble(pipesODVM.PipesODList[picODcas.SelectedIndex].PIPESOD) : 0;
+                double ODcas = picODcas.SelectedIndex >= 0 ? Convert.ToDouble(viewModel.PipesODList[picODcas.SelectedIndex].PIPESOD) : 0;
 
                 //thickness of the wall of the cemented casing
-                double Tcas = picTcas.SelectedIndex >= 0 ? Convert.ToDouble(pipesTVM.PipesTWList[picTcas.SelectedIndex].PIPESWALL) : 0;
+                double Tcas = picTcas.SelectedIndex >= 0 ? Convert.ToDouble(viewModel.PipesTWList[picTcas.SelectedIndex].PIPESWALL) : 0;
 
                 //casing length
                 double Lcas = !string.IsNullOrWhiteSpace(edLcas.Text) ? Convert.ToDouble(edLcas.Text) : 0;
@@ -377,10 +281,10 @@ namespace MUDAPP.Views.Mud
                 double Lhcp = !string.IsNullOrWhiteSpace(edLhcp.Text) ? Convert.ToDouble(edLhcp.Text) : 0;
 
                 //outer diameter of the previous casing
-                double ODprcas = picODprcas.SelectedIndex >= 0 ? Convert.ToDouble(pipesODprVM.PipesODList[picODprcas.SelectedIndex].PIPESOD) : 0;
+                double ODprcas = picODprcas.SelectedIndex >= 0 ? Convert.ToDouble(viewModel.PipesPrevODList[picODprcas.SelectedIndex].PIPESOD) : 0;
 
                 //thickness of the wall of the previous casing
-                double Tprcas = picTprcas.SelectedIndex >= 0 ? Convert.ToDouble(pipesTprVM.PipesTWList[picTprcas.SelectedIndex].PIPESWALL) : 0;
+                double Tprcas = picTprcas.SelectedIndex >= 0 ? Convert.ToDouble(viewModel.PipesPrevTWList[picTprcas.SelectedIndex].PIPESWALL) : 0;
 
                 //depth of descent of the previous column along the trunk
                 double Lprcas = !string.IsNullOrWhiteSpace(edLprcas.Text) ? Convert.ToDouble(edLprcas.Text) : 0;
@@ -406,22 +310,6 @@ namespace MUDAPP.Views.Mud
                 lbVcs.Text = "Error";
                 return;
             }
-        }
-
-        // hardware back button
-        protected override bool OnBackButtonPressed()
-        {
-            base.OnBackButtonPressed();
-
-            try
-            {
-                Shell.Current.Navigating -= Current_Navigating; // Отписываемся от события Shell.OnNavigating
-                Device.BeginInvokeOnMainThread(async () => { await Shell.Current.GoToAsync("..", true); });
-            }
-            catch { return false; }
-            // Always return true because this method is not asynchronous.
-            // We must handle the action ourselves: see above.
-            return true;
         }
     }
 }

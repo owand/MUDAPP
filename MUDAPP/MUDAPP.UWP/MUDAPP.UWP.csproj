@@ -18,9 +18,8 @@
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <PackageCertificateKeyFile>
-    </PackageCertificateKeyFile>
-    <PackageCertificateThumbprint>F54C5AE1353453F159C72C28303AF3ACEC24AF25</PackageCertificateThumbprint>
+    <PackageCertificateKeyFile>MUDAPPKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>1D2E16979D6A4ED90D0FDAA7A84A7D0FC8ABA2ED</PackageCertificateThumbprint>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
@@ -109,8 +108,6 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\CloseApp_UWP.cs" />
-    <Compile Include="Services\SQLite_UWP.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -118,10 +115,8 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DBCatalog.db">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\materialdesignicons-webfont.ttf" />
+    <Content Include="Assets\MaterialDesignIcons.ttf" />
+    <None Include="MUDAPPKey.pfx" />
     <None Include="Package.StoreAssociation.xml" />
     <Content Include="Assets\Images\default_image_app.png" />
     <Content Include="Assets\Images\logo_image_app.png" />
@@ -186,8 +181,11 @@
     <PackageReference Include="Microsoft.Advertising.XAML">
       <Version>10.1811.22001</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Graph">
+      <Version>4.7.0</Version>
+    </PackageReference>
     <PackageReference Include="Plugin.InAppBilling">
-      <Version>2.0.0</Version>
+      <Version>4.0.2</Version>
     </PackageReference>
     <PackageReference Include="sqlite-net-pcl">
       <Version>1.8.116</Version>

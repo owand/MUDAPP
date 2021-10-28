@@ -798,7 +798,7 @@
     <comment>Заголовок для грузоподъемности</comment>
   </data>
   <data name="Tonnage" xml:space="preserve">
-    <value>Грузоподъемность, т.</value>
+    <value>Грузоподъемность, т</value>
     <comment>Заголовок для грузоподъемности</comment>
   </data>
   <data name="Type" xml:space="preserve">
@@ -1051,5 +1051,16 @@
   </data>
   <data name="ThemesOSName" xml:space="preserve">
     <value>Системная</value>
+  </data>
+  <data name="FilterError" xml:space="preserve">
+    <value>Активный режим редактирования!</value>
+  </data>
+  <data name="DBDownload" xml:space="preserve">
+    <value>Восстановление базы данных из копии</value>
+    <comment>Заголовок для кнопки - Сохранить копию базы данных</comment>
+  </data>
+  <data name="DBUpload" xml:space="preserve">
+    <value>Сохранение копии базы данных</value>
+    <comment>Заголовок для кнопки - Сохранить копию базы данных</comment>
   </data>
 </root>

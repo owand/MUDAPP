@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Xamarin.Forms;
 
 namespace MUDAPP.Models
 {
@@ -7,9 +9,12 @@ namespace MUDAPP.Models
     {
         public Dictionary<string, ICommand> Commands { get; protected set; }
 
-        public ViewModelBase()
-        {
-            Commands = new Dictionary<string, ICommand>();
-        }
+        //public Command BackCommand { get; set; } = new Command(async () => await Shell.Current.GoToAsync("..", true));
+        //public Command BackCommand { get; set; } = new Command(() => Shell.Current.GoToAsync("..", true));
+
+        public Task GoBack => Shell.Current.GoToAsync("..", true);
     }
+
+
+
 }
