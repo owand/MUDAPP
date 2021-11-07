@@ -2,17 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <NeutralLanguage>en-US</NeutralLanguage>
     <Authors>Andrey Ovcharenko</Authors>
     <Product>MUDCatalog</Product>
-    <Copyright>Andrey Ovcharenko</Copyright>
-    <PackageProjectUrl>https://sites.google.com/view/owand/MUDCatalog</PackageProjectUrl>
     <Description>Catalog of chemical reagents, substances, materials and grouting cements for drilling and fixing oil and gas wells.</Description>
+    <Company>Andrey Ovcharenko</Company>
+    <Copyright>Andrey Ovcharenko</Copyright>
+    <ProduceAssemblyReference>true</ProduceAssemblyReference>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageProjectUrl>https://sites.google.com/view/owand/MUDCatalog</PackageProjectUrl>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+	  <Optimize>True</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
