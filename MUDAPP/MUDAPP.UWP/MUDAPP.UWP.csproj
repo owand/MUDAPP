@@ -19,7 +19,7 @@
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <PackageCertificateKeyFile>MUDAPPKey.pfx</PackageCertificateKeyFile>
-    <PackageCertificateThumbprint>1D2E16979D6A4ED90D0FDAA7A84A7D0FC8ABA2ED</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>48330F94438EF64869F39907D16ED434F9CC81BE</PackageCertificateThumbprint>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
